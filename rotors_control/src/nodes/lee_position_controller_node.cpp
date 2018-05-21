@@ -111,6 +111,7 @@ void LeePositionControllerNode::CommandPoseCallback(
 
   lee_position_controller_.SetTrajectoryPoint(commands_.front());
   commands_.pop_front();
+  // ROS_INFO("Received a new pose msg.\n");
 }
 
 void LeePositionControllerNode::MultiDofJointTrajectoryCallback(
@@ -122,10 +123,14 @@ void LeePositionControllerNode::MultiDofJointTrajectoryCallback(
 
   const size_t n_commands = msg->points.size();
 
+  ROS_INFO("Number of points: %zu.\n", n_commands);
+
   if(n_commands < 1){
     ROS_WARN_STREAM("Got MultiDOFJointTrajectory message, but message has no points.");
     return;
   }
+
+  ROS_INFO("Received a new trajectory.\n");
 
   mav_msgs::EigenTrajectoryPoint eigen_reference;
   mav_msgs::eigenTrajectoryPointFromMsg(msg->points.front(), &eigen_reference);
@@ -173,6 +178,21 @@ void LeePositionControllerNode::TimedCommandCallback(const ros::TimerEvent& e) {
 void LeePositionControllerNode::OdometryCallback(const nav_msgs::OdometryConstPtr& odometry_msg) {
 
   ROS_INFO_ONCE("LeePositionController got first odometry message.");
+  // ROS_INFO("Received a new odometry msg.\n");
+  ROS_INFO("State: %.16f %.16f %.16f %.16f %.16f %.16f %.16f %.16f %.16f %.16f %.16f %.16f %.16f\n",
+                                odometry_msg->pose.pose.position.x,
+                                odometry_msg->pose.pose.position.y,
+                                odometry_msg->pose.pose.position.z,
+                                odometry_msg->pose.pose.orientation.x,
+                                odometry_msg->pose.pose.orientation.y,
+                                odometry_msg->pose.pose.orientation.z,
+                                odometry_msg->pose.pose.orientation.w,
+                                odometry_msg->twist.twist.linear.x,
+                                odometry_msg->twist.twist.linear.y,
+                                odometry_msg->twist.twist.linear.z,
+                                odometry_msg->twist.twist.angular.x,
+                                odometry_msg->twist.twist.angular.y,
+                                odometry_msg->twist.twist.angular.z);
 
   EigenOdometry odometry;
   eigenOdometryFromMsg(odometry_msg, &odometry);
@@ -185,8 +205,15 @@ void LeePositionControllerNode::OdometryCallback(const nav_msgs::OdometryConstPt
   mav_msgs::ActuatorsPtr actuator_msg(new mav_msgs::Actuators);
 
   actuator_msg->angular_velocities.clear();
-  for (int i = 0; i < ref_rotor_velocities.size(); i++)
+  for (int i = 0; i < ref_rotor_velocities.size(); i++){
     actuator_msg->angular_velocities.push_back(ref_rotor_velocities[i]);
+  }
+  ROS_INFO("Output: %f %f %f %f\n",
+                          ref_rotor_velocities[0],
+                          ref_rotor_velocities[1],
+                          ref_rotor_velocities[2],
+                          ref_rotor_velocities[3]);
+
   actuator_msg->header.stamp = odometry_msg->header.stamp;
 
   motor_velocity_reference_pub_.publish(actuator_msg);
