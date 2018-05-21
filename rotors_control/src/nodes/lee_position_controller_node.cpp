@@ -179,7 +179,7 @@ void LeePositionControllerNode::OdometryCallback(const nav_msgs::OdometryConstPt
 
   ROS_INFO_ONCE("LeePositionController got first odometry message.");
   // ROS_INFO("Received a new odometry msg.\n");
-  ROS_INFO("State: %.16f %.16f %.16f %.16f %.16f %.16f %.16f %.16f %.16f %.16f %.16f %.16f %.16f\n",
+  ROS_INFO("CONTROLLER_INPUT_STATES: %.16f %.16f %.16f %.16f %.16f %.16f %.16f %.16f %.16f %.16f %.16f %.16f %.16f\n",
                                 odometry_msg->pose.pose.position.x,
                                 odometry_msg->pose.pose.position.y,
                                 odometry_msg->pose.pose.position.z,
@@ -208,7 +208,7 @@ void LeePositionControllerNode::OdometryCallback(const nav_msgs::OdometryConstPt
   for (int i = 0; i < ref_rotor_velocities.size(); i++){
     actuator_msg->angular_velocities.push_back(ref_rotor_velocities[i]);
   }
-  ROS_INFO("Output: %f %f %f %f\n",
+  ROS_INFO("CONTROLLER_OUTPUT: %f %f %f %f\n",
                           ref_rotor_velocities[0],
                           ref_rotor_velocities[1],
                           ref_rotor_velocities[2],
