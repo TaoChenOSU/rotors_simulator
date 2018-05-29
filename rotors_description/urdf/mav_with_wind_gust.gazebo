@@ -28,11 +28,13 @@
     namespace="${namespace}"
     xyz_offset="0 0 0"
     wind_direction="1 0 0"
-    wind_force_mean="0"
+    wind_force_mean="3"
     wind_gust_direction="1 1 0"
-    wind_gust_duration="2"
-    wind_gust_start="40"
+    wind_gust_duration="10"
+    wind_gust_start="0.0"
     wind_gust_force_mean="5"
-    wind_speed_mean="0">
+    wind_speed_mean="3"
+    use_custom_static_wind_field="true"
+    custom_wind_field_path="$(find rotors_gazebo)/models/hemicyl/wind_field_hemicyl.txt">
   </xacro:wind_plugin_macro>
 </robot>
