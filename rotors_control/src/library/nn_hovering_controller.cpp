@@ -60,7 +60,7 @@ namespace rotors_control{
     angular_vy = odometry_msg->twist.twist.angular.y;
     angular_vz = odometry_msg->twist.twist.angular.z;
 
-    // NormalizeInput();
+    NormalizeInput();
 
     // ROS_INFO("CONTROLLER_INPUT_STATES: %.16f %.16f %.16f %.16f %.16f %.16f %.16f %.16f %.16f %.16f %.16f %.16f %.16f\n",
     //                               position_x, position_y, position_z,
@@ -92,7 +92,7 @@ namespace rotors_control{
         for (int row = 0; row < layers_config[i].first; row++) {
           for (int col = 0; col < layers_config[i].second; col++) {
             layers_weights[i](row, col) = atof(num_in_text[row*col+col].c_str());
-            ROS_INFO("%2.20f\n", layers_weights[i](row, col));
+            ROS_INFO("%.20f\n", layers_weights[i](row, col));
           }
         }
         // read in the biases
@@ -110,26 +110,43 @@ namespace rotors_control{
   }
 
   void NNHoveringController::NormalizeInput() {
-    float position_sum = position_x + position_y + position_z;
-    float linear_vel_sum = linear_vx + linear_vy +linear_vz;
-    float angular_vel_sum = angular_vx + angular_vy + angular_vz;
+    // float position_sum = position_x + position_y + position_z;
+    // float linear_vel_sum = linear_vx + linear_vy +linear_vz;
+    // float angular_vel_sum = angular_vx + angular_vy + angular_vz;
 
-    position_x = position_x/position_sum;
-    position_y = position_y/position_sum;
-    position_z = position_z/position_sum;
+    // position_x = position_x/position_sum;
+    // position_y = position_y/position_sum;
+    // position_z = position_z/position_sum;
+    //
+    // linear_vx = linear_vx/linear_vel_sum;
+    // linear_vy = linear_vy/linear_vel_sum;
+    // linear_vz = linear_vz/linear_vel_sum;
 
-    linear_vx = linear_vx/linear_vel_sum;
-    linear_vy = linear_vy/linear_vel_sum;
-    linear_vz = linear_vz/linear_vel_sum;
+    // angular_vx = linear_vx/linear_vel_sum;
+    // angular_vy = linear_vy/linear_vel_sum;
+    // angular_vz = linear_vz/linear_vel_sum;
 
-    angular_vx = linear_vx/linear_vel_sum;
-    angular_vy = linear_vy/linear_vel_sum;
-    angular_vz = linear_vz/linear_vel_sum;
+    position_x *= 1000;
+    position_y *= 1000;
+    position_z *= 1000;
+
+    linear_vx *= 1000;
+    linear_vy *= 1000;
+    linear_vz *= 1000;
+
+    angular_vx *= 1000;
+    angular_vy *= 1000;
+    angular_vz *= 1000;
+
+    orientation_x *= 1000;
+    orientation_y *= 1000;
+    orientation_z *= 1000;
+    orientation_w *= 1000;
   }
 
   void NNHoveringController::CalculateRotorVelocities(Eigen::VectorXd* rotor_velocities) const {
     Eigen::MatrixXd state(1, 13);
-    Eigen::MatrixXd inter_result(1, 64);
+    Eigen::MatrixXd inter_result(1, 10);
     Eigen::MatrixXd result(1, 4);
     state << position_x, position_y, position_z,
                     orientation_x, orientation_y, orientation_z, orientation_w,
@@ -138,8 +155,8 @@ namespace rotors_control{
 
     // ROS_INFO("%d %d, Matrix: %d, %d.\n", inter_result.rows(), inter_result.cols(), layers_weights[0].rows(), layers_weights[0].cols());
     inter_result = state*layers_weights[0] + layers_biases[0];
-    inter_result = inter_result*layers_weights[1] + layers_biases[1];
-    result = inter_result*layers_weights[2] + layers_biases[2];
+    // inter_result = inter_result*layers_weights[1] + layers_biases[1];
+    result = inter_result*layers_weights[1] + layers_biases[1];
 
     rotor_velocities->resize(4);
     (*rotor_velocities)(0) = result(0, 0);
