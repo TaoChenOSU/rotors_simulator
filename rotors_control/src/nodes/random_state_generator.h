@@ -1,0 +1,47 @@
+/*
+** This is a node to generate state randomly based on certain
+** distributions to speed up the data collection process on controllers.
+*/
+
+#ifndef ROTORS_CONTROL_RANDOM_STATE_GENERATOR_H
+#define ROTORS_CONTROL_RANDOM_STATE_GENERATOR_H
+
+#include <trajectory_msgs/MultiDOFJointTrajectory.h>
+#include <Eigen/Core>
+#include <mav_msgs/default_topics.h>
+#include <mav_msgs/conversions.h>
+#include <nav_msgs/Odometry.h>
+#include <ros/ros.h>
+
+#include <random>
+#include <math.h>
+
+namespace rotors_control {
+  class RandomStateGenerator {
+    public:
+      RandomStateGenerator(const ros::NodeHandle& nh);
+      ~RandomStateGenerator();
+
+    private:
+      ros::NodeHandle nh_;
+      ros::Publisher state_pub_;
+      ros::Publisher trajectory_pub;
+      ros::Timer command_timer_;
+      float stddev;
+      float mean;
+
+      std::default_random_engine generator;
+
+      void WaypointPub();
+
+      void PublishState(const ros::TimerEvent& e);
+
+      void GetNewState(nav_msgs::Odometry& state);
+
+      double NormalDistribution(double mean, double stddev);
+
+      double UniformDistribution(double lower, double upper);
+  };
+}
+
+#endif

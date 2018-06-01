@@ -32,6 +32,21 @@ namespace rotors_control{
   void NNHoveringControllerNode::OdometryCallback(const nav_msgs::OdometryConstPtr& odometry_msg) {
     ROS_INFO_ONCE("NNHoveringController got first odometry message.");
 
+    ROS_INFO("CONTROLLER_INPUT_STATES: %.16f %.16f %.16f %.16f %.16f %.16f %.16f %.16f %.16f %.16f %.16f %.16f %.16f\n",
+                                  odometry_msg->pose.pose.position.x,
+                                  odometry_msg->pose.pose.position.y,
+                                  odometry_msg->pose.pose.position.z,
+                                  odometry_msg->pose.pose.orientation.x,
+                                  odometry_msg->pose.pose.orientation.y,
+                                  odometry_msg->pose.pose.orientation.z,
+                                  odometry_msg->pose.pose.orientation.w,
+                                  odometry_msg->twist.twist.linear.x,
+                                  odometry_msg->twist.twist.linear.y,
+                                  odometry_msg->twist.twist.linear.z,
+                                  odometry_msg->twist.twist.angular.x,
+                                  odometry_msg->twist.twist.angular.y,
+                                  odometry_msg->twist.twist.angular.z);
+
     nn_hovering_controller_.SetOdometry(odometry_msg);
 
     Eigen::VectorXd ref_rotor_velocities;

@@ -60,7 +60,7 @@ namespace rotors_control{
     angular_vy = odometry_msg->twist.twist.angular.y;
     angular_vz = odometry_msg->twist.twist.angular.z;
 
-    NormalizeInput();
+    // NormalizeInput();
 
     // ROS_INFO("CONTROLLER_INPUT_STATES: %.16f %.16f %.16f %.16f %.16f %.16f %.16f %.16f %.16f %.16f %.16f %.16f %.16f\n",
     //                               position_x, position_y, position_z,
@@ -92,7 +92,6 @@ namespace rotors_control{
         for (int row = 0; row < layers_config[i].first; row++) {
           for (int col = 0; col < layers_config[i].second; col++) {
             layers_weights[i](row, col) = atof(num_in_text[row*col+col].c_str());
-            ROS_INFO("%.20f\n", layers_weights[i](row, col));
           }
         }
         // read in the biases
@@ -146,17 +145,19 @@ namespace rotors_control{
 
   void NNHoveringController::CalculateRotorVelocities(Eigen::VectorXd* rotor_velocities) const {
     Eigen::MatrixXd state(1, 13);
-    Eigen::MatrixXd inter_result(1, 10);
+    Eigen::MatrixXd inter_result_1(1, 80);
+    Eigen::MatrixXd inter_result_2(1, 80);
     Eigen::MatrixXd result(1, 4);
     state << position_x, position_y, position_z,
                     orientation_x, orientation_y, orientation_z, orientation_w,
                     linear_vx, linear_vy, linear_vz,
                     angular_vx, angular_vy, angular_vz;
 
-    // ROS_INFO("%d %d, Matrix: %d, %d.\n", inter_result.rows(), inter_result.cols(), layers_weights[0].rows(), layers_weights[0].cols());
-    inter_result = state*layers_weights[0] + layers_biases[0];
-    // inter_result = inter_result*layers_weights[1] + layers_biases[1];
-    result = inter_result*layers_weights[1] + layers_biases[1];
+    inter_result_1 = state*layers_weights[0] + layers_biases[0];
+    Activation("tanh", &inter_result_1);
+    inter_result_2 = inter_result_1*layers_weights[1] + layers_biases[1];
+    Activation("tanh", &inter_result_2);
+    result = inter_result_2*layers_weights[2] + layers_biases[2];
 
     rotor_velocities->resize(4);
     (*rotor_velocities)(0) = result(0, 0);
@@ -165,7 +166,29 @@ namespace rotors_control{
     (*rotor_velocities)(3) = result(0, 3);
   }
 
-  void NNHoveringController::Evaluate() {
+  void NNHoveringController::Activation(const std::string act, Eigen::MatrixXd* layer) const {
+    int rows = layer->rows();
+    int cols = layer->cols();
 
+    // tanh activation
+    if (act.compare("tanh") == 0) {
+      for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < cols; j++) {
+          (*layer)(i, j) = tanh((*layer)(i, j));
+        }
+      }
+    } else if (act.compare("sigmoid") == 0) {
+      for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < cols; j++) {
+          (*layer)(i, j) = Sigmoid((*layer)(i, j));
+        }
+      }
+    } else {
+      ROS_ERROR("No activation function.\n");
+    }
+  }
+
+  double NNHoveringController::Sigmoid(double n) const{
+    return 1/(1+exp(-n));
   }
 }

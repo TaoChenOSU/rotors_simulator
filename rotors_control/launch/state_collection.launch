@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="mav_name" default="hummingbird" />
+  <arg name="world_name" default="basic" />
+
+  <group ns="$(arg mav_name)">
+    <node name="lee_position_controller_node" pkg="rotors_control" type="lee_position_controller_node" output="log">
+      <rosparam command="load" file="$(find rotors_gazebo)/resource/lee_controller_$(arg mav_name).yaml" />
+      <rosparam command="load" file="$(find rotors_gazebo)/resource/$(arg mav_name).yaml" />
+      <remap from="odometry" to="odometry_sensor1/odometry" />
+    </node>
+
+    <node name="random_state_generator" pkg="rotors_control" type="random_state_generator" output="screen" >
+      <remap from="odometry" to="odometry_sensor1/odometry" />
+    </node>
+  </group>
+
+</launch>

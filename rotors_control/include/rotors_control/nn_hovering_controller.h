@@ -15,6 +15,7 @@
 #include <ros/ros.h>
 
 #include <fstream>
+#include <math.h>
 
 namespace rotors_control {
   class NNHoveringController{
@@ -43,8 +44,9 @@ namespace rotors_control {
 
       void NormalizeInput();
 
-      void Evaluate();
-      // TODO
+      void Activation(const std::string act, Eigen::MatrixXd* layer) const;
+
+      double Sigmoid(double n) const;
   };
 
 }
