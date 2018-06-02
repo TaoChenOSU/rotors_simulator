@@ -35,7 +35,7 @@ namespace rotors_control{
       InitializeNetwork();
       fp.close();
     } else {
-      ROS_ERROR("Controller opening config file error. \n");
+      ROS_ERROR("Controller cannot open config file. \n");
       exit(1);
     }
   }
@@ -61,12 +61,6 @@ namespace rotors_control{
     angular_vz = odometry_msg->twist.twist.angular.z;
 
     // NormalizeInput();
-
-    // ROS_INFO("CONTROLLER_INPUT_STATES: %.16f %.16f %.16f %.16f %.16f %.16f %.16f %.16f %.16f %.16f %.16f %.16f %.16f\n",
-    //                               position_x, position_y, position_z,
-    //                               orientation_x, orientation_y, orientation_z, orientation_w,
-    //                               linear_vx, linear_vy, linear_vz,
-    //                               angular_vx, angular_vy, angular_vz);
 
     set_odometry_ = true;
   }
@@ -109,44 +103,13 @@ namespace rotors_control{
   }
 
   void NNHoveringController::NormalizeInput() {
-    // float position_sum = position_x + position_y + position_z;
-    // float linear_vel_sum = linear_vx + linear_vy +linear_vz;
-    // float angular_vel_sum = angular_vx + angular_vy + angular_vz;
-
-    // position_x = position_x/position_sum;
-    // position_y = position_y/position_sum;
-    // position_z = position_z/position_sum;
-    //
-    // linear_vx = linear_vx/linear_vel_sum;
-    // linear_vy = linear_vy/linear_vel_sum;
-    // linear_vz = linear_vz/linear_vel_sum;
-
-    // angular_vx = linear_vx/linear_vel_sum;
-    // angular_vy = linear_vy/linear_vel_sum;
-    // angular_vz = linear_vz/linear_vel_sum;
-
-    position_x *= 1000;
-    position_y *= 1000;
-    position_z *= 1000;
-
-    linear_vx *= 1000;
-    linear_vy *= 1000;
-    linear_vz *= 1000;
-
-    angular_vx *= 1000;
-    angular_vy *= 1000;
-    angular_vz *= 1000;
-
-    orientation_x *= 1000;
-    orientation_y *= 1000;
-    orientation_z *= 1000;
-    orientation_w *= 1000;
+    return;
   }
 
   void NNHoveringController::CalculateRotorVelocities(Eigen::VectorXd* rotor_velocities) const {
     Eigen::MatrixXd state(1, 13);
     Eigen::MatrixXd inter_result_1(1, 80);
-    Eigen::MatrixXd inter_result_2(1, 80);
+    Eigen::MatrixXd inter_result_2(1, 80);    
     Eigen::MatrixXd result(1, 4);
     state << position_x, position_y, position_z,
                     orientation_x, orientation_y, orientation_z, orientation_w,
@@ -154,9 +117,9 @@ namespace rotors_control{
                     angular_vx, angular_vy, angular_vz;
 
     inter_result_1 = state*layers_weights[0] + layers_biases[0];
-    Activation("tanh", &inter_result_1);
+    Activation("sigmoid", &inter_result_1);
     inter_result_2 = inter_result_1*layers_weights[1] + layers_biases[1];
-    Activation("tanh", &inter_result_2);
+    Activation("sigmoid", &inter_result_2); 
     result = inter_result_2*layers_weights[2] + layers_biases[2];
 
     rotor_velocities->resize(4);

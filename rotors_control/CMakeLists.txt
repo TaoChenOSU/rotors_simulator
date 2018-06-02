@@ -68,11 +68,15 @@ add_executable(random_state_generator src/nodes/random_state_generator.cpp)
 add_dependencies(random_state_generator ${catkin_EXPORTED_TARGETS})
 target_link_libraries(random_state_generator ${catkin_LIBRARIES})
 
+add_executable(dagger_routine src/nodes/dagger_routine.cpp)
+add_dependencies(dagger_routine ${catkin_EXPORTED_TARGETS})
+target_link_libraries(dagger_routine ${catkin_LIBRARIES})
+
 install(TARGETS lee_position_controller roll_pitch_yawrate_thrust_controller nn_hovering_controller
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 )
 
-install(TARGETS lee_position_controller_node roll_pitch_yawrate_thrust_controller_node nn_hovering_controller_node random_state_generator
+install(TARGETS lee_position_controller_node roll_pitch_yawrate_thrust_controller_node nn_hovering_controller_node random_state_generator dagger_routine
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

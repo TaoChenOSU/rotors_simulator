@@ -52,7 +52,7 @@ namespace rotors_control {
 
     state.pose.pose.position.x = NormalDistribution(0.0, 0.2);
     state.pose.pose.position.y = NormalDistribution(0.0, 0.2);
-    state.pose.pose.position.z = UniformDistribution(0.0, 1.2);
+    state.pose.pose.position.z = UniformDistribution(0.0, 1.5);
 
     state.pose.pose.orientation.x = 0;
     state.pose.pose.orientation.y = 0;
