@@ -12,9 +12,12 @@
 #include <mav_msgs/conversions.h>
 #include <nav_msgs/Odometry.h>
 #include <ros/ros.h>
+#include <gazebo_msgs/SetModelState.h>
 
 #include <random>
 #include <math.h>
+
+#define PI 3.1415926535897
 
 namespace rotors_control {
   class RandomStateGenerator {
@@ -24,17 +27,24 @@ namespace rotors_control {
 
     private:
       ros::NodeHandle nh_;
-      ros::Publisher state_pub_;
+      // ros::Publisher state_pub_;
+      ros::ServiceClient set_state_srv;
+      gazebo_msgs::SetModelState srv;
+
       ros::Publisher trajectory_pub;
       ros::Timer command_timer_;
       float stddev;
       float mean;
 
+      int counter;
+
       std::default_random_engine generator;
 
       void WaypointPub();
 
-      void PublishState(const ros::TimerEvent& e);
+      // void PublishState(const ros::TimerEvent& e);
+
+      void SetState(const ros::TimerEvent& e);
 
       void GetNewState(nav_msgs::Odometry& state);
 

@@ -85,7 +85,8 @@ namespace rotors_control{
         layers_weights.push_back(Eigen::MatrixXd(layers_config[i].first, layers_config[i].second));
         for (int row = 0; row < layers_config[i].first; row++) {
           for (int col = 0; col < layers_config[i].second; col++) {
-            layers_weights[i](row, col) = atof(num_in_text[row*col+col].c_str());
+            layers_weights[i](row, col) = atof(num_in_text[row*layers_config[i].second+col].c_str());
+            // ROS_INFO("%f ", layers_weights[i](row, col));
           }
         }
         // read in the biases
@@ -95,6 +96,7 @@ namespace rotors_control{
         layers_biases.push_back(Eigen::MatrixXd(1, layers_config[i].second));
         for (int row = 0; row < layers_config[i].second; row++) {
           layers_biases[i](0, row) = atof(num_in_text[row].c_str());
+          // ROS_INFO("%f ", layers_biases[i](0, row));
         }
       }
       fp_weights.close();
@@ -108,8 +110,8 @@ namespace rotors_control{
 
   void NNHoveringController::CalculateRotorVelocities(Eigen::VectorXd* rotor_velocities) const {
     Eigen::MatrixXd state(1, 13);
-    Eigen::MatrixXd inter_result_1(1, 80);
-    Eigen::MatrixXd inter_result_2(1, 80);    
+    Eigen::MatrixXd inter_result_1(1, 64);
+    Eigen::MatrixXd inter_result_2(1, 64);    
     Eigen::MatrixXd result(1, 4);
     state << position_x, position_y, position_z,
                     orientation_x, orientation_y, orientation_z, orientation_w,
@@ -117,16 +119,16 @@ namespace rotors_control{
                     angular_vx, angular_vy, angular_vz;
 
     inter_result_1 = state*layers_weights[0] + layers_biases[0];
-    Activation("sigmoid", &inter_result_1);
+    Activation("tanh", &inter_result_1);
     inter_result_2 = inter_result_1*layers_weights[1] + layers_biases[1];
-    Activation("sigmoid", &inter_result_2); 
+    Activation("tanh", &inter_result_2); 
     result = inter_result_2*layers_weights[2] + layers_biases[2];
 
     rotor_velocities->resize(4);
-    (*rotor_velocities)(0) = result(0, 0);
-    (*rotor_velocities)(1) = result(0, 1);
-    (*rotor_velocities)(2) = result(0, 2);
-    (*rotor_velocities)(3) = result(0, 3);
+    (*rotor_velocities)(0) = result(0, 0)*838;
+    (*rotor_velocities)(1) = result(0, 1)*838;
+    (*rotor_velocities)(2) = result(0, 2)*838;
+    (*rotor_velocities)(3) = result(0, 3)*838;
   }
 
   void NNHoveringController::Activation(const std::string act, Eigen::MatrixXd* layer) const {

@@ -18,7 +18,7 @@ namespace rotors_control {
 
 		WaypointPub();
 
-		command_timer_ = nh_.createTimer(ros::Duration(0.01), &DaggerRoutine::PublishState, this);
+		command_timer_ = nh_.createTimer(ros::Duration(0.1), &DaggerRoutine::PublishState, this);
 	} 
   
   	DaggerRoutine::~DaggerRoutine() {}
