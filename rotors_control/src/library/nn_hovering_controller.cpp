@@ -15,7 +15,10 @@ namespace rotors_control{
     std::vector<std::string> nums_in_text;
     num_of_layers = 0;
 
-    fp.open("/home/taotaochen/Desktop/REL_Lab/NN_train/nn.config", std::fstream::in);
+    std::string config_path = model_path;
+    config_path.append("nn.config");
+
+    fp.open(config_path.c_str(), std::fstream::in);
     if (fp.is_open()) {
       while (getline(fp, line)) {
         nums_in_text.clear();
@@ -28,7 +31,7 @@ namespace rotors_control{
           layer_config.first = atoi(nums_in_text[0].c_str());
           layer_config.second = atoi(nums_in_text[1].c_str());
           layers_config.push_back(layer_config);
-          // ROS_INFO("%d, %d.\n", layer_config.first, layer_config.second);
+          ROS_INFO("%d, %d.\n", layer_config.first, layer_config.second);
         }
       }
       num_of_layers = layers_config.size();
@@ -60,8 +63,6 @@ namespace rotors_control{
     angular_vy = odometry_msg->twist.twist.angular.y;
     angular_vz = odometry_msg->twist.twist.angular.z;
 
-    // NormalizeInput();
-
     set_odometry_ = true;
   }
 
@@ -73,8 +74,13 @@ namespace rotors_control{
     std::string line;
     std::vector<std::string> num_in_text;
 
-    fp_weights.open("/home/taotaochen/Desktop/REL_Lab/NN_train/weights.txt", std::fstream::in);
-    fp_biases.open("/home/taotaochen/Desktop/REL_Lab/NN_train/biases.txt", std::fstream::in);
+    std::string weights_path = model_path;
+    weights_path.append("weights.txt");
+    std::string biases_path = model_path;
+    biases_path.append("biases.txt");
+
+    fp_weights.open(weights_path.c_str(), std::fstream::in);
+    fp_biases.open(biases_path.c_str(), std::fstream::in);
 
     if (fp_weights.is_open() && fp_biases.is_open()) {
       for (int i = 0; i < num_of_layers; i++) {
@@ -82,56 +88,63 @@ namespace rotors_control{
         num_in_text.clear();
         getline(fp_weights, line);
         boost::split(num_in_text, line, [](char space){return space == ' ';});
-        layers_weights.push_back(Eigen::MatrixXd(layers_config[i].first, layers_config[i].second));
+        layers_weights.push_back(Eigen::MatrixXf(layers_config[i].first, layers_config[i].second));
         for (int row = 0; row < layers_config[i].first; row++) {
           for (int col = 0; col < layers_config[i].second; col++) {
-            layers_weights[i](row, col) = atof(num_in_text[row*layers_config[i].second+col].c_str());
-            // ROS_INFO("%f ", layers_weights[i](row, col));
+            layers_weights[i](row, col) = strtof(num_in_text[row*layers_config[i].second+col].c_str(), NULL);
+            ROS_INFO("%f ", layers_weights[i](row, col));
           }
         }
         // read in the biases
         num_in_text.clear();
         getline(fp_biases, line);
         boost::split(num_in_text, line, [](char space){return space == ' ';});
-        layers_biases.push_back(Eigen::MatrixXd(1, layers_config[i].second));
+        layers_biases.push_back(Eigen::MatrixXf(1, layers_config[i].second));
         for (int row = 0; row < layers_config[i].second; row++) {
-          layers_biases[i](0, row) = atof(num_in_text[row].c_str());
-          // ROS_INFO("%f ", layers_biases[i](0, row));
+          layers_biases[i](0, row) = strtof(num_in_text[row].c_str(), NULL);
+          ROS_INFO("%f ", layers_biases[i](0, row));
         }
       }
       fp_weights.close();
       fp_biases.close();
+    } else {
+      ROS_ERROR("Controller cannot open weights/config files. \n");
+      exit(1);
     }
   }
 
-  void NNHoveringController::NormalizeInput() {
-    return;
-  }
+  void NNHoveringController::CalculateRotorVelocities(Eigen::VectorXf* rotor_velocities) const {
+    std::vector<Eigen::MatrixXf> layers_result;
+    // inputs
+    layers_result.push_back(Eigen::MatrixXf(1, layers_config[0].first));
+    for (int i = 1; i < num_of_layers; i++) {
+      layers_result.push_back(Eigen::MatrixXf(1, layers_config[i].first));
+    }
+    // outputs
+    layers_result.push_back(Eigen::MatrixXf(1, 4));  
 
-  void NNHoveringController::CalculateRotorVelocities(Eigen::VectorXd* rotor_velocities) const {
-    Eigen::MatrixXd state(1, 13);
-    Eigen::MatrixXd inter_result_1(1, 64);
-    Eigen::MatrixXd inter_result_2(1, 64);    
-    Eigen::MatrixXd result(1, 4);
-    state << position_x, position_y, position_z,
-                    orientation_x, orientation_y, orientation_z, orientation_w,
-                    linear_vx, linear_vy, linear_vz,
-                    angular_vx, angular_vy, angular_vz;
+    layers_result[0] << position_x, position_y, position_z,
+                        orientation_x, orientation_y, orientation_z, orientation_w,
+                        linear_vx, linear_vy, linear_vz,
+                        angular_vx, angular_vy, angular_vz;
 
-    inter_result_1 = state*layers_weights[0] + layers_biases[0];
-    Activation("tanh", &inter_result_1);
-    inter_result_2 = inter_result_1*layers_weights[1] + layers_biases[1];
-    Activation("tanh", &inter_result_2); 
-    result = inter_result_2*layers_weights[2] + layers_biases[2];
+    // evaluate the network
+    for (int i = 0; i < num_of_layers-1; i++) {
+      layers_result[i+1] = layers_result[i]*layers_weights[i] + layers_biases[i];
+      Activation("tanh", &(layers_result[i+1]));
+    }
+ 
+    layers_result[num_of_layers] = layers_result[num_of_layers-1]*layers_weights[num_of_layers-1]
+                                     + layers_biases[num_of_layers-1];
 
     rotor_velocities->resize(4);
-    (*rotor_velocities)(0) = result(0, 0)*838;
-    (*rotor_velocities)(1) = result(0, 1)*838;
-    (*rotor_velocities)(2) = result(0, 2)*838;
-    (*rotor_velocities)(3) = result(0, 3)*838;
+    (*rotor_velocities)(0) = layers_result[num_of_layers](0, 0)*838;
+    (*rotor_velocities)(1) = layers_result[num_of_layers](0, 1)*838;
+    (*rotor_velocities)(2) = layers_result[num_of_layers](0, 2)*838;
+    (*rotor_velocities)(3) = layers_result[num_of_layers](0, 3)*838;
   }
 
-  void NNHoveringController::Activation(const std::string act, Eigen::MatrixXd* layer) const {
+  void NNHoveringController::Activation(const std::string act, Eigen::MatrixXf* layer) const {
     int rows = layer->rows();
     int cols = layer->cols();
 
@@ -153,7 +166,7 @@ namespace rotors_control{
     }
   }
 
-  double NNHoveringController::Sigmoid(double n) const{
+  float NNHoveringController::Sigmoid(float n) const{
     return 1/(1+exp(-n));
   }
 }

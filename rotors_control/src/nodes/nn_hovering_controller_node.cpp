@@ -49,7 +49,7 @@ namespace rotors_control{
 
     nn_hovering_controller_.SetOdometry(odometry_msg);
 
-    Eigen::VectorXd ref_rotor_velocities;
+    Eigen::VectorXf ref_rotor_velocities;
     nn_hovering_controller_.CalculateRotorVelocities(&ref_rotor_velocities);
 
     mav_msgs::ActuatorsPtr actuator_msg(new mav_msgs::Actuators);

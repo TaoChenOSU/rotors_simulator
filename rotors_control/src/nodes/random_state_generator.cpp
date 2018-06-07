@@ -97,9 +97,9 @@ namespace rotors_control {
     state.pose.pose.position.y = NormalDistribution(0.0, 0.1);
     state.pose.pose.position.z = UniformDistribution(0.0, 1.2);
 
-    roll = NormalDistribution(0.0, PI/10);
-    pitch = NormalDistribution(0.0, PI/10);
-    yaw = NormalDistribution(0.0, PI/10);
+    roll = NormalDistribution(0.0, PI/20);
+    pitch = NormalDistribution(0.0, PI/20);
+    yaw = NormalDistribution(0.0, PI/20);
 
     double cy = cos(yaw/2);
     double sy = sin(yaw/2);

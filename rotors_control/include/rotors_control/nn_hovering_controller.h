@@ -16,6 +16,7 @@
 
 #include <fstream>
 #include <math.h>
+#include <string.h>
 
 namespace rotors_control {
   class NNHoveringController{
@@ -25,7 +26,7 @@ namespace rotors_control {
 
       void SetOdometry(const nav_msgs::OdometryConstPtr& odometry_msg);
 
-      void CalculateRotorVelocities(Eigen::VectorXd* rotor_velocities) const;
+      void CalculateRotorVelocities(Eigen::VectorXf* rotor_velocities) const;
 
     private:
       float position_x, position_y, position_z;
@@ -37,16 +38,18 @@ namespace rotors_control {
 
       int num_of_layers;
       std::vector<std::pair<int, int> > layers_config;
-      std::vector<Eigen::MatrixXd> layers_weights;
-      std::vector<Eigen::MatrixXd> layers_biases;
+      std::vector<Eigen::MatrixXf> layers_weights;
+      std::vector<Eigen::MatrixXf> layers_biases;
+
+      std::string model_path = "/home/taotaochen/Desktop/REL_Lab/NN_train/models/8/";
 
       void InitializeNetwork();
 
-      void NormalizeInput();
+      // void NormalizeInput();
 
-      void Activation(const std::string act, Eigen::MatrixXd* layer) const;
+      void Activation(const std::string act, Eigen::MatrixXf* layer) const;
 
-      double Sigmoid(double n) const;
+      float Sigmoid(float n) const;
   };
 
 }
