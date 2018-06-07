@@ -28,20 +28,27 @@ namespace rotors_control {
 
       void CalculateRotorVelocities(Eigen::VectorXf* rotor_velocities) const;
 
+      void SetModelPath(const char* model);
+
+      void init();
+
     private:
       float position_x, position_y, position_z;
       float orientation_x, orientation_y, orientation_z, orientation_w;
       float linear_vx, linear_vy, linear_vz;
       float angular_vx, angular_vy, angular_vz;
 
-      bool set_odometry_;
+      bool odometry_set_;
+      bool model_set_;
 
       int num_of_layers;
       std::vector<std::pair<int, int> > layers_config;
       std::vector<Eigen::MatrixXf> layers_weights;
       std::vector<Eigen::MatrixXf> layers_biases;
 
-      std::string model_path = "/home/taotaochen/Desktop/REL_Lab/NN_train/models/8/";
+      std::string model_path = "/home/taotaochen/Desktop/REL_Lab/NN_train/models/";
+
+      void ReadConfig();
 
       void InitializeNetwork();
 

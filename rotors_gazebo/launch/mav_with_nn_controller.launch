@@ -1,3 +1,4 @@
+<?xml version="1.0"?>
 <launch>
   <arg name="mav_name" default="hummingbird" />
   <arg name="world_name" default="basic" />
@@ -29,7 +30,7 @@
       <arg name="enable_ground_truth" value="$(arg enable_ground_truth)" />
       <arg name="log_file" value="$(arg log_file)" />
     </include>
-    <node name="nn_hovering_controller_node" pkg="rotors_control" type="nn_hovering_controller_node" output="log">
+    <node name="nn_hovering_controller_node" pkg="rotors_control" type="nn_hovering_controller_node" output="log" args="8">
       <remap from="odometry" to="odometry_sensor1/odometry" />
     </node>
     <node name="hovering_example" pkg="rotors_gazebo" type="hovering_example" output="screen" />

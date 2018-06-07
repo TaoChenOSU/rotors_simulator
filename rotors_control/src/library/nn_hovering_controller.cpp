@@ -10,6 +10,28 @@
 
 namespace rotors_control{
   NNHoveringController::NNHoveringController() {
+    model_set_ = false;
+    odometry_set_ = false;
+  }
+
+  NNHoveringController::~NNHoveringController() {}
+
+  void NNHoveringController::SetModelPath(const char* model) {
+    model_path.append(model);
+    model_path.append("/");
+    model_set_ = true;
+    ROS_INFO("%s\n", model_path.c_str());
+  }
+
+  void NNHoveringController::init() {
+    assert(model_set_);
+
+    ReadConfig();
+    InitializeNetwork();
+    ROS_INFO("NN controller init completed.\n");
+  }
+
+  void NNHoveringController::ReadConfig() {
     std::ifstream fp;
     std::string line;
     std::vector<std::string> nums_in_text;
@@ -35,15 +57,12 @@ namespace rotors_control{
         }
       }
       num_of_layers = layers_config.size();
-      InitializeNetwork();
       fp.close();
     } else {
       ROS_ERROR("Controller cannot open config file. \n");
       exit(1);
     }
   }
-
-  NNHoveringController::~NNHoveringController() {}
 
   void NNHoveringController::SetOdometry(const nav_msgs::OdometryConstPtr& odometry_msg) {
     position_x = odometry_msg->pose.pose.position.x;
@@ -63,7 +82,7 @@ namespace rotors_control{
     angular_vy = odometry_msg->twist.twist.angular.y;
     angular_vz = odometry_msg->twist.twist.angular.z;
 
-    set_odometry_ = true;
+    odometry_set_ = true;
   }
 
   void NNHoveringController::InitializeNetwork() {
@@ -102,13 +121,13 @@ namespace rotors_control{
         layers_biases.push_back(Eigen::MatrixXf(1, layers_config[i].second));
         for (int row = 0; row < layers_config[i].second; row++) {
           layers_biases[i](0, row) = strtof(num_in_text[row].c_str(), NULL);
-          ROS_INFO("%f ", layers_biases[i](0, row));
+          // ROS_INFO("%f ", layers_biases[i](0, row));
         }
       }
       fp_weights.close();
       fp_biases.close();
     } else {
-      ROS_ERROR("Controller cannot open weights/config files. \n");
+      ROS_ERROR("Controller cannot open weights/biasesfiles. \n");
       exit(1);
     }
   }

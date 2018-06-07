@@ -12,7 +12,7 @@
 
 namespace rotors_control{
   NNHoveringControllerNode::NNHoveringControllerNode(
-          const ros::NodeHandle& nh, const ros::NodeHandle& private_nh)
+          const ros::NodeHandle& nh, const ros::NodeHandle& private_nh, const char* model)
           : nh_(nh), private_nh_(private_nh)
   {
     odometry_sub_ = nh_.subscribe(mav_msgs::default_topics::ODOMETRY, 1,
@@ -23,6 +23,9 @@ namespace rotors_control{
 
     command_timer_ = nh_.createTimer(ros::Duration(0),
                                 &NNHoveringControllerNode::TimedCommandCallback, this, true, false);
+
+    nn_hovering_controller_.SetModelPath(model);
+    nn_hovering_controller_.init();
   }
 
   NNHoveringControllerNode::~NNHoveringControllerNode() {}
@@ -70,9 +73,15 @@ int main(int argc, char** argv) {
 
   ros::NodeHandle nh;
   ros::NodeHandle private_nh("~");
-  rotors_control::NNHoveringControllerNode nn_hovering_controller_node(nh, private_nh);
 
-  ros::spin();
+  if (argc != 2) {
+    ROS_ERROR("Missing argument, possibly the model index");
+    exit(1);
+  } else {
+    ROS_INFO("You have selected to use model %s.\n", argv[1]);
+    rotors_control::NNHoveringControllerNode nn_hovering_controller_node(nh, private_nh, argv[1]);
+    ros::spin();
+  }
 
   return 0;
 }
