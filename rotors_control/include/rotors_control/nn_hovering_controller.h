@@ -14,15 +14,24 @@
 #include <Eigen/Eigen>
 #include <ros/ros.h>
 
+#include <mav_msgs/conversions.h>
+#include <mav_msgs/eigen_mav_msgs.h>
+
+#include "rotors_control/common.h"
+
 #include <fstream>
 #include <math.h>
 #include <string.h>
+
+#define MAX_RPM 838
 
 namespace rotors_control {
   class NNHoveringController{
     public:
       NNHoveringController();
       ~NNHoveringController();
+
+      void SetTrajectoryPoint(const mav_msgs::EigenTrajectoryPoint& command_trajectory);
 
       void SetOdometry(const nav_msgs::OdometryConstPtr& odometry_msg);
 
@@ -33,13 +42,16 @@ namespace rotors_control {
       void init();
 
     private:
-      float position_x, position_y, position_z;
-      float orientation_x, orientation_y, orientation_z, orientation_w;
-      float linear_vx, linear_vy, linear_vz;
+      float position_x_e, position_y_e, position_z_e;
+      Eigen::Matrix3d rotational_matrix;
+      float linear_vx_e, linear_vy_e, linear_vz_e;
       float angular_vx, angular_vy, angular_vz;
 
       bool odometry_set_;
       bool model_set_;
+      bool trajectory_set_;
+
+      mav_msgs::EigenTrajectoryPoint command_trajectory_;
 
       int num_of_layers;
       std::vector<std::pair<int, int> > layers_config;

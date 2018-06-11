@@ -12,6 +12,7 @@ namespace rotors_control{
   NNHoveringController::NNHoveringController() {
     model_set_ = false;
     odometry_set_ = false;
+    trajectory_set_ = false;
   }
 
   NNHoveringController::~NNHoveringController() {}
@@ -64,27 +65,6 @@ namespace rotors_control{
     }
   }
 
-  void NNHoveringController::SetOdometry(const nav_msgs::OdometryConstPtr& odometry_msg) {
-    position_x = odometry_msg->pose.pose.position.x;
-    position_y = odometry_msg->pose.pose.position.y;
-    position_z = odometry_msg->pose.pose.position.z;
-
-    orientation_x = odometry_msg->pose.pose.orientation.x;
-    orientation_y = odometry_msg->pose.pose.orientation.y;
-    orientation_z = odometry_msg->pose.pose.orientation.z;
-    orientation_w = odometry_msg->pose.pose.orientation.w;
-
-    linear_vx = odometry_msg->twist.twist.linear.x;
-    linear_vy = odometry_msg->twist.twist.linear.y;
-    linear_vz = odometry_msg->twist.twist.linear.z;
-
-    angular_vx = odometry_msg->twist.twist.angular.x;
-    angular_vy = odometry_msg->twist.twist.angular.y;
-    angular_vz = odometry_msg->twist.twist.angular.z;
-
-    odometry_set_ = true;
-  }
-
   void NNHoveringController::InitializeNetwork() {
     assert(num_of_layers);
 
@@ -111,7 +91,6 @@ namespace rotors_control{
         for (int row = 0; row < layers_config[i].first; row++) {
           for (int col = 0; col < layers_config[i].second; col++) {
             layers_weights[i](row, col) = strtof(num_in_text[row*layers_config[i].second+col].c_str(), NULL);
-            ROS_INFO("%f ", layers_weights[i](row, col));
           }
         }
         // read in the biases
@@ -121,7 +100,6 @@ namespace rotors_control{
         layers_biases.push_back(Eigen::MatrixXf(1, layers_config[i].second));
         for (int row = 0; row < layers_config[i].second; row++) {
           layers_biases[i](0, row) = strtof(num_in_text[row].c_str(), NULL);
-          // ROS_INFO("%f ", layers_biases[i](0, row));
         }
       }
       fp_weights.close();
@@ -132,7 +110,54 @@ namespace rotors_control{
     }
   }
 
+  void NNHoveringController::SetOdometry(const nav_msgs::OdometryConstPtr& odometry_msg) {
+    // calculate the error between the current state and the trajectories set point
+    // error is computed according to the lee controller
+
+    EigenOdometry odometry;
+    eigenOdometryFromMsg(odometry_msg, &odometry);
+    
+    // position error 
+    Eigen::Vector3d position_error;
+    position_error = odometry.position - command_trajectory_.position_W;
+    position_x_e = position_error[0];
+    position_y_e = position_error[1];
+    position_z_e = position_error[2];
+
+    // orientation
+    rotational_matrix = odometry.orientation.toRotationMatrix();
+
+    // linear velocity error
+    // Transform velocity to world frame 
+    Eigen::Vector3d velocity_W = rotational_matrix * odometry.velocity;
+    Eigen::Vector3d velocity_error;
+    velocity_error = velocity_W - command_trajectory_.velocity_W;
+
+    linear_vx_e = velocity_error[0];
+    linear_vy_e = velocity_error[1];
+    linear_vz_e = velocity_error[2];    
+ 
+    // assuming angular velocity is always (0, 0, 0)
+    angular_vx = odometry_msg->twist.twist.angular.x;
+    angular_vy = odometry_msg->twist.twist.angular.y;
+    angular_vz = odometry_msg->twist.twist.angular.z;
+
+    odometry_set_ = true;
+  }
+
+  void NNHoveringController::SetTrajectoryPoint(
+      const mav_msgs::EigenTrajectoryPoint& command_trajectory) {
+    command_trajectory_ = command_trajectory;
+
+    trajectory_set_ = true;
+  }
+ 
   void NNHoveringController::CalculateRotorVelocities(Eigen::VectorXf* rotor_velocities) const {
+    rotor_velocities->resize(4);
+    if(!trajectory_set_) {
+      *rotor_velocities = Eigen::VectorXf::Zero(rotor_velocities->rows());
+      return;
+    }
     std::vector<Eigen::MatrixXf> layers_result;
     // inputs
     layers_result.push_back(Eigen::MatrixXf(1, layers_config[0].first));
@@ -142,9 +167,11 @@ namespace rotors_control{
     // outputs
     layers_result.push_back(Eigen::MatrixXf(1, 4));  
 
-    layers_result[0] << position_x, position_y, position_z,
-                        orientation_x, orientation_y, orientation_z, orientation_w,
-                        linear_vx, linear_vy, linear_vz,
+    layers_result[0] << position_x_e, position_y_e, position_z_e,
+                        linear_vx_e, linear_vy_e, linear_vz_e,
+                        rotational_matrix(0, 0), rotational_matrix(0, 1), rotational_matrix(0, 2),
+                        rotational_matrix(1, 0), rotational_matrix(1, 1), rotational_matrix(1, 2),
+                        rotational_matrix(2, 0), rotational_matrix(2, 1), rotational_matrix(2, 2),   
                         angular_vx, angular_vy, angular_vz;
 
     // evaluate the network

@@ -27,6 +27,9 @@
 #include "rotors_control/common.h"
 #include "rotors_control/parameters.h"
 
+#include <string>
+#include <boost/format.hpp>
+
 namespace rotors_control {
 
 // Default values for the lee position controller and the Asctec Firefly.
@@ -64,7 +67,7 @@ class LeePositionController {
   void SetOdometry(const EigenOdometry& odometry);
   void SetTrajectoryPoint(
     const mav_msgs::EigenTrajectoryPoint& command_trajectory);
-
+ 
   LeePositionControllerParameters controller_parameters_;
   VehicleParameters vehicle_parameters_;
 
@@ -80,9 +83,10 @@ class LeePositionController {
   mav_msgs::EigenTrajectoryPoint command_trajectory_;
   EigenOdometry odometry_;
 
-  void ComputeDesiredAngularAcc(const Eigen::Vector3d& acceleration,
+  // modified the return type to a string for data logging
+  std::string ComputeDesiredAngularAcc(const Eigen::Vector3d& acceleration,
                                 Eigen::Vector3d* angular_acceleration) const;
-  void ComputeDesiredAcceleration(Eigen::Vector3d* acceleration) const;
+  std::string ComputeDesiredAcceleration(Eigen::Vector3d* acceleration) const;
 };
 }
 

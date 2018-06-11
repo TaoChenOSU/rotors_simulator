@@ -93,8 +93,8 @@ namespace rotors_control {
     // double normalizedFactor;
     double roll, pitch, yaw;
 
-    state.pose.pose.position.x = NormalDistribution(0.0, 0.1);
-    state.pose.pose.position.y = NormalDistribution(0.0, 0.1);
+    state.pose.pose.position.x = NormalDistribution(0.0, 0.2);
+    state.pose.pose.position.y = NormalDistribution(0.0, 0.2);
     state.pose.pose.position.z = UniformDistribution(0.0, 1.2);
 
     roll = NormalDistribution(0.0, PI/9);

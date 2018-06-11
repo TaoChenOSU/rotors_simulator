@@ -64,14 +64,18 @@ void LeePositionController::CalculateRotorVelocities(Eigen::VectorXd* rotor_velo
   }
 
   Eigen::Vector3d acceleration;
-  ComputeDesiredAcceleration(&acceleration);
+  std::string log_1 = ComputeDesiredAcceleration(&acceleration);
 
   Eigen::Vector3d angular_acceleration;
-  ComputeDesiredAngularAcc(acceleration, &angular_acceleration);
+  std::string log_2 = ComputeDesiredAngularAcc(acceleration, &angular_acceleration);
+
+  std::string log_in;
+  log_in.append(log_1);
+  log_in.append(log_2);
+  ROS_INFO("CONTROLLER_INPUT_STATES: %s", log_in.c_str());
 
   // Project thrust onto body z axis.
   double thrust = -vehicle_parameters_.mass_ * acceleration.dot(odometry_.orientation.toRotationMatrix().col(2));
-  // ROS_INFO("The thrust is %f.\n", thrust);
 
   Eigen::Vector4d angular_acceleration_thrust;
   angular_acceleration_thrust.block<3, 1>(0, 0) = angular_acceleration;
@@ -80,6 +84,13 @@ void LeePositionController::CalculateRotorVelocities(Eigen::VectorXd* rotor_velo
   *rotor_velocities = angular_acc_to_rotor_velocities_ * angular_acceleration_thrust;
   *rotor_velocities = rotor_velocities->cwiseMax(Eigen::VectorXd::Zero(rotor_velocities->rows()));
   *rotor_velocities = rotor_velocities->cwiseSqrt();
+
+  std::string log_out = "";
+  for (int i = 0; i < rotor_velocities->size(); i++){
+    log_out += " ";
+    log_out += std::to_string((*rotor_velocities)[i]);
+  }
+  ROS_INFO("CONTROLLER_OUTPUT: %s", log_out.c_str());
 }
 
 void LeePositionController::SetOdometry(const EigenOdometry& odometry) {
@@ -92,7 +103,7 @@ void LeePositionController::SetTrajectoryPoint(
   controller_active_ = true;
 }
 
-void LeePositionController::ComputeDesiredAcceleration(Eigen::Vector3d* acceleration) const {
+std::string LeePositionController::ComputeDesiredAcceleration(Eigen::Vector3d* acceleration) const {
   assert(acceleration);
 
   Eigen::Vector3d position_error;
@@ -109,11 +120,17 @@ void LeePositionController::ComputeDesiredAcceleration(Eigen::Vector3d* accelera
   *acceleration = (position_error.cwiseProduct(controller_parameters_.position_gain_)
       + velocity_error.cwiseProduct(controller_parameters_.velocity_gain_)) / vehicle_parameters_.mass_
       - vehicle_parameters_.gravity_ * e_3 - command_trajectory_.acceleration_W;
+
+  boost::format log = boost::format("%f %f %f %f %f %f ") % 
+      position_error[0] % position_error[1] % position_error[2] %
+      velocity_error[0] % velocity_error[1] % velocity_error[2];
+
+  return log.str();
 }
 
 // Implementation from the T. Lee et al. paper
 // Control of complex maneuvers for a quadrotor UAV using geometric methods on SE(3)
-void LeePositionController::ComputeDesiredAngularAcc(const Eigen::Vector3d& acceleration,
+std::string LeePositionController::ComputeDesiredAngularAcc(const Eigen::Vector3d& acceleration,
                                                      Eigen::Vector3d* angular_acceleration) const {
   assert(angular_acceleration);
 
@@ -150,5 +167,13 @@ void LeePositionController::ComputeDesiredAngularAcc(const Eigen::Vector3d& acce
   *angular_acceleration = -1 * angle_error.cwiseProduct(normalized_attitude_gain_)
                            - angular_rate_error.cwiseProduct(normalized_angular_rate_gain_)
                            + odometry_.angular_velocity.cross(odometry_.angular_velocity); // we don't need the inertia matrix here
+
+  boost::format log = boost::format("%f %f %f %f %f %f %f %f %f %f %f %f") % 
+            R(0, 0) % R(0, 1) % R(0, 2) %
+            R(1, 0) % R(1, 1) % R(1, 2) %
+            R(2, 0) % R(2, 1) % R(2, 2) %
+            odometry_.angular_velocity[0] % odometry_.angular_velocity[1] % odometry_.angular_velocity[2];
+
+  return log.str();
 }
 }

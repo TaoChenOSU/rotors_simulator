@@ -42,13 +42,16 @@ namespace rotors_control{
 
       // subscribers
       ros::Subscriber odometry_sub_;
+      ros::Subscriber trajectory_sub_;
 
       ros::Publisher motor_velocity_reference_pub_;
 
+      mav_msgs::EigenTrajectoryPointDeque commands_;
       std::deque<ros::Duration> command_waiting_times_;
       ros::Timer command_timer_;
 
       void TimedCommandCallback(const ros::TimerEvent& e);
+      void TrajectoryCallback(const trajectory_msgs::MultiDOFJointTrajectoryConstPtr& msg);
       void OdometryCallback(const nav_msgs::OdometryConstPtr& odometry_msg);
     };
 }
