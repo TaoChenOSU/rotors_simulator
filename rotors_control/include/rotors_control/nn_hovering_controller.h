@@ -43,9 +43,11 @@ namespace rotors_control {
 
     private:
       float position_x_e, position_y_e, position_z_e;
-      Eigen::Matrix3d rotational_matrix;
+      Eigen::Matrix3d rotational_matrix, R_des_f, R_diff;
       float linear_vx_e, linear_vy_e, linear_vz_e;
       float angular_vx, angular_vy, angular_vz;
+      double yaw;
+      float cos_yaw, sin_yaw;
 
       bool odometry_set_;
       bool model_set_;
@@ -58,7 +60,7 @@ namespace rotors_control {
       std::vector<Eigen::MatrixXf> layers_weights;
       std::vector<Eigen::MatrixXf> layers_biases;
 
-      std::string model_path = "/home/taotaochen/Desktop/REL_Lab/NN_train/models/";
+      std::string model_path = "/home/taotaochen/Desktop/REL_Lab/NN_train/models/56/";
 
       void ReadConfig();
 

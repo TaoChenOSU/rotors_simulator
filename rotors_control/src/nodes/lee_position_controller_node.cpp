@@ -167,6 +167,10 @@ void LeePositionControllerNode::TimedCommandCallback(const ros::TimerEvent& e) {
     command_timer_.setPeriod(command_waiting_times_.front());
     command_waiting_times_.pop_front();
     command_timer_.start();
+  } else {
+    // this is added for ending the data collection once the last point is reached
+    std_srvs::Empty srv;
+    ros::service::call("/gazebo/pause_physics", srv);
   }
 }
 

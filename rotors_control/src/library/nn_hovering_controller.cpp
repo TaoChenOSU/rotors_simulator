@@ -124,19 +124,30 @@ namespace rotors_control{
     position_y_e = position_error[1];
     position_z_e = position_error[2];
 
+    ROS_INFO("CONTROLLER_INPUT_STATES: %f %f %f", odometry.position[0], odometry.position[1], odometry.position[2]);
+    ROS_INFO("CONTROLLER_ERROR: %f %f %f", position_x_e, position_y_e, position_z_e);
+
     // orientation
     rotational_matrix = odometry.orientation.toRotationMatrix();
+    // R_diff = rotational_matrix*R_des_f.transpose();
+    R_diff = rotational_matrix;
+
 
     // linear velocity error
     // Transform velocity to world frame 
     Eigen::Vector3d velocity_W = rotational_matrix * odometry.velocity;
     Eigen::Vector3d velocity_error;
-    velocity_error = velocity_W - command_trajectory_.velocity_W;
+    // velocity_error = velocity_W - command_trajectory_.velocity_W;
+    velocity_error = velocity_W;
 
-    linear_vx_e = velocity_error[0];
-    linear_vy_e = velocity_error[1];
-    linear_vz_e = velocity_error[2];    
+    // linear_vx_e = velocity_error[0];
+    // linear_vy_e = velocity_error[1];
+    // linear_vz_e = velocity_error[2];    
  
+    linear_vx_e = odometry.velocity[0];
+    linear_vy_e = odometry.velocity[1];
+    linear_vz_e = odometry.velocity[2]; 
+
     // assuming angular velocity is always (0, 0, 0)
     angular_vx = odometry_msg->twist.twist.angular.x;
     angular_vy = odometry_msg->twist.twist.angular.y;
@@ -148,6 +159,14 @@ namespace rotors_control{
   void NNHoveringController::SetTrajectoryPoint(
       const mav_msgs::EigenTrajectoryPoint& command_trajectory) {
     command_trajectory_ = command_trajectory;
+
+    yaw = command_trajectory_.getYaw();
+    cos_yaw = (float)cos(yaw);
+    sin_yaw = (float)sin(yaw);
+
+    R_des_f << cos_yaw, -sin_yaw, 0, 
+               sin_yaw, cos_yaw, 0,
+               0, 0, 1;
 
     trajectory_set_ = true;
   }
@@ -169,10 +188,10 @@ namespace rotors_control{
 
     layers_result[0] << position_x_e, position_y_e, position_z_e,
                         linear_vx_e, linear_vy_e, linear_vz_e,
-                        rotational_matrix(0, 0), rotational_matrix(0, 1), rotational_matrix(0, 2),
-                        rotational_matrix(1, 0), rotational_matrix(1, 1), rotational_matrix(1, 2),
-                        rotational_matrix(2, 0), rotational_matrix(2, 1), rotational_matrix(2, 2),   
-                        angular_vx, angular_vy, angular_vz;
+                        R_diff(0, 0), R_diff(0, 1), R_diff(0, 2),
+                        R_diff(1, 0), R_diff(1, 1), R_diff(1, 2),
+                        R_diff(2, 0), R_diff(2, 1), R_diff(2, 2),   
+                        angular_vx, angular_vy, angular_vz, cos(yaw), sin(yaw);
 
     // evaluate the network
     for (int i = 0; i < num_of_layers-1; i++) {
@@ -184,10 +203,10 @@ namespace rotors_control{
                                      + layers_biases[num_of_layers-1];
 
     rotor_velocities->resize(4);
-    (*rotor_velocities)(0) = layers_result[num_of_layers](0, 0)*838;
-    (*rotor_velocities)(1) = layers_result[num_of_layers](0, 1)*838;
-    (*rotor_velocities)(2) = layers_result[num_of_layers](0, 2)*838;
-    (*rotor_velocities)(3) = layers_result[num_of_layers](0, 3)*838;
+    (*rotor_velocities)(1) = layers_result[num_of_layers](0, 1)*MAX_RPM;
+    (*rotor_velocities)(0) = layers_result[num_of_layers](0, 0)*MAX_RPM;
+    (*rotor_velocities)(2) = layers_result[num_of_layers](0, 2)*MAX_RPM;
+    (*rotor_velocities)(3) = layers_result[num_of_layers](0, 3)*MAX_RPM;
   }
 
   void NNHoveringController::Activation(const std::string act, Eigen::MatrixXf* layer) const {

@@ -32,6 +32,7 @@
 #include <nav_msgs/Odometry.h>
 #include <ros/callback_queue.h>
 #include <ros/ros.h>
+#include <std_srvs/Empty.h>
 #include <trajectory_msgs/MultiDOFJointTrajectory.h>
 
 #include "rotors_control/common.h"

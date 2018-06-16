@@ -100,6 +100,7 @@ void LeePositionController::SetOdometry(const EigenOdometry& odometry) {
 void LeePositionController::SetTrajectoryPoint(
     const mav_msgs::EigenTrajectoryPoint& command_trajectory) {
   command_trajectory_ = command_trajectory;
+  // ROS_INFO("New waypoint:\n%s", command_trajectory.toString().c_str());
   controller_active_ = true;
 }
 
@@ -123,8 +124,14 @@ std::string LeePositionController::ComputeDesiredAcceleration(Eigen::Vector3d* a
 
   boost::format log = boost::format("%f %f %f %f %f %f ") % 
       position_error[0] % position_error[1] % position_error[2] %
-      velocity_error[0] % velocity_error[1] % velocity_error[2];
+      velocity_W[0] % velocity_W[1] % velocity_W[2];
+  // boost::format log = boost::format("%f %f %f %f %f %f ") % 
+  //     position_error[0] % position_error[1] % position_error[2] %
+  //     odometry_.velocity[0] % odometry_.velocity[1] % odometry_.velocity[2];
 
+  // ROS_INFO("CONTROLLER_INPUT_STATES: %f %f %f", odometry_.position[0], odometry_.position[1], odometry_.position[2]);
+
+  // ROS_INFO("CONTROLLER_ERROR: %f %f %f", position_error[0], position_error[1], position_error[2]);
   return log.str();
 }
 
@@ -135,6 +142,9 @@ std::string LeePositionController::ComputeDesiredAngularAcc(const Eigen::Vector3
   assert(angular_acceleration);
 
   Eigen::Matrix3d R = odometry_.orientation.toRotationMatrix();
+  // ROS_INFO("%f %f %f\n%f %f %f\n%f %f %f\n", R(0, 0), R(0, 1), R(0, 2),
+  //                                            R(1, 0), R(1, 1), R(1, 2),
+  //                                            R(2, 0), R(2, 1), R(2, 2));
 
   // Get the desired rotation matrix.
   Eigen::Vector3d b1_des;
@@ -168,10 +178,21 @@ std::string LeePositionController::ComputeDesiredAngularAcc(const Eigen::Vector3
                            - angular_rate_error.cwiseProduct(normalized_angular_rate_gain_)
                            + odometry_.angular_velocity.cross(odometry_.angular_velocity); // we don't need the inertia matrix here
 
+  // matrix representing the final rotation with yaw 
+  Eigen::Matrix3d R_des_f;
+  R_des_f << cos(yaw), -sin(yaw), 0, 
+             sin(yaw), cos(yaw), 0,
+             0, 0, 1;
+
+  // matrix representing the difference in rotation 
+  Eigen::Matrix3d R_diff;
+  R_diff = R*R_des_f.transpose();
+  // R_diff = R;
+
   boost::format log = boost::format("%f %f %f %f %f %f %f %f %f %f %f %f") % 
-            R(0, 0) % R(0, 1) % R(0, 2) %
-            R(1, 0) % R(1, 1) % R(1, 2) %
-            R(2, 0) % R(2, 1) % R(2, 2) %
+            R_diff(0, 0) % R_diff(0, 1) % R_diff(0, 2) %
+            R_diff(1, 0) % R_diff(1, 1) % R_diff(1, 2) %
+            R_diff(2, 0) % R_diff(2, 1) % R_diff(2, 2) %
             odometry_.angular_velocity[0] % odometry_.angular_velocity[1] % odometry_.angular_velocity[2];
 
   return log.str();

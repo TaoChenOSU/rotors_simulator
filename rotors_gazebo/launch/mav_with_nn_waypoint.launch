@@ -30,7 +30,7 @@
       <arg name="enable_ground_truth" value="$(arg enable_ground_truth)" />
       <arg name="log_file" value="$(arg log_file)" />
     </include>
-    <node name="nn_hovering_controller_node" pkg="rotors_control" type="nn_hovering_controller_node" output="screen" args="4">
+    <node name="nn_hovering_controller_node" pkg="rotors_control" type="nn_hovering_controller_node" output="log" args="4">
       <remap from="odometry" to="odometry_sensor1/odometry" />
     </node>
     <node name="hovering_example" pkg="rotors_gazebo" type="hovering_example" output="screen" />

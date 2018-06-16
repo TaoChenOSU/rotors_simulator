@@ -6,8 +6,8 @@
 #include "random_state_generator.h"
 
 namespace rotors_control {
-  RandomStateGenerator::RandomStateGenerator(const ros::NodeHandle& nh)
-    : nh_(nh) {
+  RandomStateGenerator::RandomStateGenerator(const ros::NodeHandle& nh, int num_of_trajs)
+    : nh_(nh), num_of_trajs(num_of_trajs) {
 
     // state_pub_ = nh_.advertise<nav_msgs::Odometry>(
     //   mav_msgs::default_topics::ODOMETRY, 1);
@@ -19,7 +19,7 @@ namespace rotors_control {
 
     // WaypointPub();
 
-    command_timer_ = nh_.createTimer(ros::Duration(2.0), &RandomStateGenerator::SetState, this);
+    command_timer_ = nh_.createTimer(ros::Duration(2.5), &RandomStateGenerator::SetState, this);
 
     counter = 0;
   }
@@ -84,6 +84,14 @@ namespace rotors_control {
     if(counter%10 == 0){
       ROS_INFO("%d points.\n", counter);
     }
+
+    if (num_of_trajs != 0) {
+      if (counter == num_of_trajs) {
+        std_srvs::Empty srv;
+        ros::service::call("/gazebo/pause_physics", srv);
+      }
+    }
+
     counter++;
   }
 
@@ -93,13 +101,13 @@ namespace rotors_control {
     // double normalizedFactor;
     double roll, pitch, yaw;
 
-    state.pose.pose.position.x = NormalDistribution(0.0, 0.2);
-    state.pose.pose.position.y = NormalDistribution(0.0, 0.2);
-    state.pose.pose.position.z = UniformDistribution(0.0, 1.2);
+    state.pose.pose.position.x = NormalDistribution(0.0, 0.3);
+    state.pose.pose.position.y = NormalDistribution(0.0, 0.3);
+    state.pose.pose.position.z = UniformDistribution(0.0, 2.0);
 
-    roll = NormalDistribution(0.0, PI/9);
-    pitch = NormalDistribution(0.0, PI/9);
-    yaw = NormalDistribution(0.0, PI/9);
+    roll = NormalDistribution(0.0, PI/12);
+    pitch = NormalDistribution(0.0, PI/12);
+    yaw = UniformDistribution(-PI/6, PI/6);
 
     double cy = cos(yaw/2);
     double sy = sin(yaw/2);
@@ -142,8 +150,16 @@ int main (int argc, char** argv) {
   ros::init(argc, argv, "random_state_generator");
 
   ros::NodeHandle nh;
-  rotors_control::RandomStateGenerator random_state_generator(nh);
-  ros::spin();
+
+  if (argc == 2) {
+    ROS_INFO("You are about to generate %s trajectories.\n", argv[1]);
+    rotors_control::RandomStateGenerator random_state_generator(nh, std::stoi(argv[1]));
+    ros::spin();
+  } else {
+    ROS_INFO("No # of trajectories provided.\n");
+    rotors_control::RandomStateGenerator random_state_generator(nh, 0);
+    ros::spin();    
+  }
 
   return 0;
 }
