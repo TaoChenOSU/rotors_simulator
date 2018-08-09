@@ -95,20 +95,20 @@ namespace rotors_control {
     counter++;
   }
 
-  // only positions vary.
-  // velocities and orientations are collected through simulation (Dagger)
   void RandomStateGenerator::GetNewState(nav_msgs::Odometry& state) {
     // double normalizedFactor;
     double roll, pitch, yaw;
 
-    state.pose.pose.position.x = NormalDistribution(0.0, 0.3);
-    state.pose.pose.position.y = NormalDistribution(0.0, 0.3);
+    state.pose.pose.position.x = NormalDistribution(0.0, 0.8);
+    state.pose.pose.position.y = NormalDistribution(0.0, 0.8);
     state.pose.pose.position.z = UniformDistribution(0.0, 2.0);
 
     roll = NormalDistribution(0.0, PI/12);
     pitch = NormalDistribution(0.0, PI/12);
-    yaw = UniformDistribution(-PI/6, PI/6);
+    // yaw = UniformDistribution(-PI/6, PI/6);
+    yaw = 0;
 
+    // This might not generate uniform distributed orientations
     double cy = cos(yaw/2);
     double sy = sin(yaw/2);
     double cr = cos(roll/2);
@@ -120,11 +120,6 @@ namespace rotors_control {
     state.pose.pose.orientation.y = cy*cr*sp + sy*sr*cp;
     state.pose.pose.orientation.z = sy*cr*cp - cy*sr*sp;
     state.pose.pose.orientation.w = cy*cr*cp + sy*sr*sp;
-
-    // state.pose.pose.orientation.x = 0;
-    // state.pose.pose.orientation.y = 0;
-    // state.pose.pose.orientation.z = 0;
-    // state.pose.pose.orientation.w = 1.0;
 
     state.twist.twist.linear.x = 0;
     state.twist.twist.linear.y = 0;

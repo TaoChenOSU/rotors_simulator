@@ -11,6 +11,8 @@
       (even when Gazebo is started through roslaunch) -->
   <arg name="verbose" default="false"/>
 
+  <arg name="data_type" default="3" />
+
   <env name="GAZEBO_MODEL_PATH" value="${GAZEBO_MODEL_PATH}:$(find rotors_gazebo)/models"/>
   <env name="GAZEBO_RESOURCE_PATH" value="${GAZEBO_RESOURCE_PATH}:$(find rotors_gazebo)/models"/>
   <include file="$(find gazebo_ros)/launch/empty_world.launch">
@@ -29,7 +31,7 @@
       <arg name="enable_ground_truth" value="$(arg enable_ground_truth)" />
       <arg name="log_file" value="$(arg log_file)"/>
     </include>
-    <node name="lee_position_controller_node" pkg="rotors_control" type="lee_position_controller_node" output="log">
+    <node name="lee_position_controller_node" pkg="rotors_control" type="lee_position_controller_node" output="log" args="$(arg data_type)">
       <rosparam command="load" file="$(find rotors_gazebo)/resource/lee_controller_$(arg mav_name).yaml" />
       <rosparam command="load" file="$(find rotors_gazebo)/resource/$(arg mav_name).yaml" />
       <remap from="odometry" to="odometry_sensor1/odometry" />

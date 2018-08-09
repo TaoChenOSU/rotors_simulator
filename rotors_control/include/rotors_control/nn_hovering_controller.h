@@ -22,6 +22,8 @@
 #include <fstream>
 #include <math.h>
 #include <string.h>
+#include <regex>
+#include <iterator>
 
 #define MAX_RPM 838
 
@@ -37,7 +39,7 @@ namespace rotors_control {
 
       void CalculateRotorVelocities(Eigen::VectorXf* rotor_velocities) const;
 
-      void SetModelPath(const char* model);
+      void SetModelPath(const char* model, const char* config, const char* stat);
 
       void init();
 
@@ -49,8 +51,6 @@ namespace rotors_control {
       double yaw;
       float cos_yaw, sin_yaw;
 
-      bool odometry_set_;
-      bool model_set_;
       bool trajectory_set_;
 
       mav_msgs::EigenTrajectoryPoint command_trajectory_;
@@ -59,10 +59,23 @@ namespace rotors_control {
       std::vector<std::pair<int, int> > layers_config;
       std::vector<Eigen::MatrixXf> layers_weights;
       std::vector<Eigen::MatrixXf> layers_biases;
+      std::vector<std::string> activations;
 
-      std::string model_path = "/home/taotaochen/Desktop/REL_Lab/NN_train/models/56/";
+      std::vector<float> input_means;
+      std::vector<float> input_stds;
+      std::vector<float> output_means;
+      std::vector<float> output_stds;
+
+      // file path to find the config file and weights/biases files
+      std::string weights_path;
+      std::string biases_path;
+      std::string config_path;
+      std::string stat_path;
+      bool paths_set_;
 
       void ReadConfig();
+
+      void ReadStat();
 
       void InitializeNetwork();
 
@@ -71,6 +84,8 @@ namespace rotors_control {
       void Activation(const std::string act, Eigen::MatrixXf* layer) const;
 
       float Sigmoid(float n) const;
+
+      float Relu(float n) const;
   };
 
 }

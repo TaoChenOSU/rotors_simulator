@@ -12,6 +12,9 @@
       (even when Gazebo is started through roslaunch) -->
   <arg name="verbose" default="false"/>
 
+  <arg name="model_path" default="/home/taotaochen/Desktop/REL_Lab/Xeon/RotorS_Experiments/Experiment_1/Results/run_43" />
+  <arg name="config_path" default="/home/taotaochen/Desktop/REL_Lab/Xeon/RotorS_Experiments/Experiment_1/Results/run_43" />
+  <arg name="data_stat_path" default="/home/taotaochen/Desktop/REL_Lab/Xeon/RotorS_Experiments/Experiment_1/Results" />
 
   <env name="GAZEBO_MODEL_PATH" value="${GAZEBO_MODEL_PATH}:$(find rotors_gazebo)/models" />
   <env name="GAZEBO_RESOURCE_PATH" value="${GAZEBO_RESOURCE_PATH}:$(find rotors_gazebo)/models" />
@@ -30,7 +33,7 @@
       <arg name="enable_ground_truth" value="$(arg enable_ground_truth)" />
       <arg name="log_file" value="$(arg log_file)" />
     </include>
-    <node name="nn_hovering_controller_node" pkg="rotors_control" type="nn_hovering_controller_node" output="log" args="4">
+    <node name="nn_hovering_controller_node" pkg="rotors_control" type="nn_hovering_controller_node" output="log" args="$(arg model_path) $(arg config_path) $(arg data_stat_path)">
       <remap from="odometry" to="odometry_sensor1/odometry" />
     </node>
     <node name="hovering_example" pkg="rotors_gazebo" type="hovering_example" output="screen" />

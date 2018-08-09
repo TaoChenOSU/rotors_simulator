@@ -97,6 +97,14 @@ void LeePositionController::SetOdometry(const EigenOdometry& odometry) {
   odometry_ = odometry;
 }
 
+void LeePositionController::SetLogDataType(const char* dt) {
+  data_type = atoi(dt);
+  if (data_type < 1 || data_type > 6) {
+    ROS_ERROR("data type out of range.\n");
+    exit(1);
+  }
+}
+
 void LeePositionController::SetTrajectoryPoint(
     const mav_msgs::EigenTrajectoryPoint& command_trajectory) {
   command_trajectory_ = command_trajectory;
@@ -122,17 +130,21 @@ std::string LeePositionController::ComputeDesiredAcceleration(Eigen::Vector3d* a
       + velocity_error.cwiseProduct(controller_parameters_.velocity_gain_)) / vehicle_parameters_.mass_
       - vehicle_parameters_.gravity_ * e_3 - command_trajectory_.acceleration_W;
 
-  boost::format log = boost::format("%f %f %f %f %f %f ") % 
-      position_error[0] % position_error[1] % position_error[2] %
-      velocity_W[0] % velocity_W[1] % velocity_W[2];
-  // boost::format log = boost::format("%f %f %f %f %f %f ") % 
-  //     position_error[0] % position_error[1] % position_error[2] %
-  //     odometry_.velocity[0] % odometry_.velocity[1] % odometry_.velocity[2];
-
   // ROS_INFO("CONTROLLER_INPUT_STATES: %f %f %f", odometry_.position[0], odometry_.position[1], odometry_.position[2]);
 
   // ROS_INFO("CONTROLLER_ERROR: %f %f %f", position_error[0], position_error[1], position_error[2]);
-  return log.str();
+
+  if (data_type == 1 || data_type == 2 || data_type == 5) {
+    boost::format log = boost::format("%f %f %f %f %f %f ") % 
+      position_error[0] % position_error[1] % position_error[2] %
+      odometry_.velocity[0] % odometry_.velocity[1] % odometry_.velocity[2];
+    return log.str();
+  } else {
+    boost::format log = boost::format("%f %f %f %f %f %f ") % 
+      position_error[0] % position_error[1] % position_error[2] %
+      velocity_W[0] % velocity_W[1] % velocity_W[2];
+    return log.str();
+  }
 }
 
 // Implementation from the T. Lee et al. paper
@@ -186,15 +198,30 @@ std::string LeePositionController::ComputeDesiredAngularAcc(const Eigen::Vector3
 
   // matrix representing the difference in rotation 
   Eigen::Matrix3d R_diff;
-  R_diff = R*R_des_f.transpose();
-  // R_diff = R;
 
-  boost::format log = boost::format("%f %f %f %f %f %f %f %f %f %f %f %f") % 
+  if (data_type == 1 || data_type == 3) {
+    boost::format log = boost::format("%f %f %f %f %f %f %f %f %f %f %f %f %f %f") % 
+            R(0, 0) % R(0, 1) % R(0, 2) %
+            R(1, 0) % R(1, 1) % R(1, 2) %
+            R(2, 0) % R(2, 1) % R(2, 2) %
+            odometry_.angular_velocity[0] % odometry_.angular_velocity[1] % odometry_.angular_velocity[2] %
+            cos(yaw) % sin(yaw);
+    return log.str();
+  } else if (data_type == 2 || data_type == 4) {
+    R_diff = R*R_des_f.transpose();
+    boost::format log = boost::format("%f %f %f %f %f %f %f %f %f %f %f %f") % 
             R_diff(0, 0) % R_diff(0, 1) % R_diff(0, 2) %
             R_diff(1, 0) % R_diff(1, 1) % R_diff(1, 2) %
             R_diff(2, 0) % R_diff(2, 1) % R_diff(2, 2) %
             odometry_.angular_velocity[0] % odometry_.angular_velocity[1] % odometry_.angular_velocity[2];
-
-  return log.str();
+    return log.str();
+  } else {
+    boost::format log = boost::format("%f %f %f %f %f %f %f %f %f %f %f %f") % 
+            R(0, 0) % R(0, 1) % R(0, 2) %
+            R(1, 0) % R(1, 1) % R(1, 2) %
+            R(2, 0) % R(2, 1) % R(2, 2) %
+            odometry_.angular_velocity[0] % odometry_.angular_velocity[1] % odometry_.angular_velocity[2];
+    return log.str();
+  }
 }
 }

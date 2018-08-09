@@ -12,7 +12,7 @@
 
 namespace rotors_control{
   NNHoveringControllerNode::NNHoveringControllerNode(
-          const ros::NodeHandle& nh, const ros::NodeHandle& private_nh, const char* model)
+          const ros::NodeHandle& nh, const ros::NodeHandle& private_nh, const char* model, const char* config, const char* stat)
           : nh_(nh), private_nh_(private_nh)
   {
     odometry_sub_ = nh_.subscribe(mav_msgs::default_topics::ODOMETRY, 1,
@@ -28,7 +28,7 @@ namespace rotors_control{
     command_timer_ = nh_.createTimer(ros::Duration(0),
                                 &NNHoveringControllerNode::TimedCommandCallback, this, true, false);
 
-    nn_hovering_controller_.SetModelPath(model);
+    nn_hovering_controller_.SetModelPath(model, config, stat);
     nn_hovering_controller_.init();
   }
 
@@ -123,12 +123,14 @@ int main(int argc, char** argv) {
   ros::NodeHandle nh;
   ros::NodeHandle private_nh("~");
 
-  if (argc != 2) {
-    ROS_ERROR("Missing argument, possibly the model index");
+  if (argc != 4) {
+    ROS_ERROR("Missing argument, possibly the model path and config path or data stat path");
     exit(1);
   } else {
-    ROS_INFO("You have selected to use model %s.\n", argv[1]);
-    rotors_control::NNHoveringControllerNode nn_hovering_controller_node(nh, private_nh, argv[1]);
+    ROS_INFO("You have selected to use model path %s.\n", argv[1]);
+    ROS_INFO("You have selected to use config path %s.\n", argv[2]);
+    ROS_INFO("You have selected to use data stat path %s.\n", argv[3]);
+    rotors_control::NNHoveringControllerNode nn_hovering_controller_node(nh, private_nh, argv[1], argv[2], argv[3]);
     ros::spin();
   }
 

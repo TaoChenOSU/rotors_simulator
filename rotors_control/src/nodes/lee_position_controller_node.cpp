@@ -28,7 +28,7 @@
 namespace rotors_control {
 
 LeePositionControllerNode::LeePositionControllerNode(
-  const ros::NodeHandle& nh, const ros::NodeHandle& private_nh)
+  const ros::NodeHandle& nh, const ros::NodeHandle& private_nh, const char* data_type)
   :nh_(nh),
    private_nh_(private_nh){
   InitializeParams();
@@ -49,6 +49,8 @@ LeePositionControllerNode::LeePositionControllerNode(
 
   command_timer_ = nh_.createTimer(ros::Duration(0), &LeePositionControllerNode::TimedCommandCallback, this,
                                   true, false);
+
+  lee_position_controller_.SetLogDataType(data_type);
 }
 
 LeePositionControllerNode::~LeePositionControllerNode() { }
@@ -205,9 +207,15 @@ int main(int argc, char** argv) {
 
   ros::NodeHandle nh;
   ros::NodeHandle private_nh("~");
-  rotors_control::LeePositionControllerNode lee_position_controller_node(nh, private_nh);
 
-  ros::spin();
+  if (argc != 2) {
+    ROS_ERROR("Missing argument, possibly the data type index");
+    exit(1);
+  } else {
+    ROS_INFO("You have selected to collect data of type %s.\n", argv[1]);
+    rotors_control::LeePositionControllerNode lee_position_controller_node(nh, private_nh, argv[1]);
+    ros::spin();
+  }
 
   return 0;
 }

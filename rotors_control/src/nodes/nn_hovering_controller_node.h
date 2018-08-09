@@ -30,7 +30,8 @@ namespace rotors_control{
 
   class NNHoveringControllerNode {
     public:
-      NNHoveringControllerNode(const ros::NodeHandle& nh, const ros::NodeHandle& private_nh, const char* model);
+      NNHoveringControllerNode(const ros::NodeHandle& nh, const ros::NodeHandle& private_nh, 
+                                const char* model, const char* config, const char* stat);
       ~NNHoveringControllerNode();
 
     private:

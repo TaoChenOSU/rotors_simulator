@@ -67,6 +67,8 @@ class LeePositionController {
   void SetOdometry(const EigenOdometry& odometry);
   void SetTrajectoryPoint(
     const mav_msgs::EigenTrajectoryPoint& command_trajectory);
+
+  void SetLogDataType(const char* data_type);
  
   LeePositionControllerParameters controller_parameters_;
   VehicleParameters vehicle_parameters_;
@@ -75,6 +77,8 @@ class LeePositionController {
  private:
   bool initialized_params_;
   bool controller_active_;
+
+  int data_type;
 
   Eigen::Vector3d normalized_attitude_gain_;
   Eigen::Vector3d normalized_angular_rate_gain_;

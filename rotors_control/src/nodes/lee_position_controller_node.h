@@ -42,7 +42,7 @@ namespace rotors_control {
 
 class LeePositionControllerNode {
  public:
-  LeePositionControllerNode(const ros::NodeHandle& nh, const ros::NodeHandle& private_nh);
+  LeePositionControllerNode(const ros::NodeHandle& nh, const ros::NodeHandle& private_nh, const char* data_type);
   ~LeePositionControllerNode();
 
   void InitializeParams();
