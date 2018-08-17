@@ -103,9 +103,12 @@ if (NOT NO_ROS)
     rosbag
     roscpp
     rotors_comm
-    rotors_control
+#    rotors_control
     std_srvs
     tf
+    std_msgs
+    nav_msgs
+    message_generation
   )
 endif()
 
@@ -198,7 +201,7 @@ if (NOT NO_ROS)
   catkin_package(
     INCLUDE_DIRS include ${Eigen_INCLUDE_DIRS}
     LIBRARIES rotors_gazebo_motor_model rotors_gazebo_controller_interface
-    CATKIN_DEPENDS cv_bridge geometry_msgs mav_msgs octomap_msgs octomap_ros rosbag roscpp rotors_comm rotors_control std_srvs tf
+    CATKIN_DEPENDS cv_bridge geometry_msgs mav_msgs octomap_msgs octomap_ros rosbag roscpp rotors_comm std_srvs tf nav_msgs #rotors_control
     DEPENDS eigen gazebo octomap opencv
     #CFG_EXTRAS rotors_gazebo_plugins.cmake
   )

@@ -58,9 +58,15 @@ namespace rotors_control{
         boost::split(line_split, line, [](char colon){return colon == ':';});
         type = line_split[0];
 
+        // see if the string starts with a space
+        if (line_split[1].at(0) == ' ') {
+          line_split[1].replace(0, 1, "");
+        }
+
         boost::split(nums_in_text, line_split[1], [](char space){return space == ' ';});
         if (type.compare(std::string("input_mean")) == 0) {
           for (int i = 0; i < nums_in_text.size(); i++) {
+            ROS_INFO("%s", nums_in_text[i].c_str());
             input_means.push_back(atof(nums_in_text[i].c_str()));
           }
         }
@@ -191,8 +197,6 @@ namespace rotors_control{
 
     ROS_INFO("CONTROLLER_INPUT_STATES: %f %f %f", odometry.position[0], odometry.position[1], odometry.position[2]);
     ROS_INFO("CONTROLLER_ERROR: %f %f %f", position_x_e, position_y_e, position_z_e);
-
-
 
     // orientation
     rotational_matrix = odometry.orientation.toRotationMatrix();

@@ -72,7 +72,7 @@ void LeePositionController::CalculateRotorVelocities(Eigen::VectorXd* rotor_velo
   std::string log_in;
   log_in.append(log_1);
   log_in.append(log_2);
-  ROS_INFO("CONTROLLER_INPUT_STATES: %s", log_in.c_str());
+  // ROS_INFO("CONTROLLER_INPUT_STATES: %s", log_in.c_str());
 
   // Project thrust onto body z axis.
   double thrust = -vehicle_parameters_.mass_ * acceleration.dot(odometry_.orientation.toRotationMatrix().col(2));
@@ -90,7 +90,11 @@ void LeePositionController::CalculateRotorVelocities(Eigen::VectorXd* rotor_velo
     log_out += " ";
     log_out += std::to_string((*rotor_velocities)[i]);
   }
-  ROS_INFO("CONTROLLER_OUTPUT: %s", log_out.c_str());
+  // ROS_INFO("CONTROLLER_OUTPUT: %s", log_out.c_str());
+}
+
+bool LeePositionController::is_active() {
+  return controller_active_;
 }
 
 void LeePositionController::SetOdometry(const EigenOdometry& odometry) {

@@ -69,6 +69,8 @@ class LeePositionController {
     const mav_msgs::EigenTrajectoryPoint& command_trajectory);
 
   void SetLogDataType(const char* data_type);
+
+  bool is_active();
  
   LeePositionControllerParameters controller_parameters_;
   VehicleParameters vehicle_parameters_;

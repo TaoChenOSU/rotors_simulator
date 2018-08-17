@@ -10,6 +10,7 @@
  * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
+
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,6 +20,9 @@
 
 #ifndef ROTORS_CONTROL_LEE_POSITION_CONTROLLER_NODE_H
 #define ROTORS_CONTROL_LEE_POSITION_CONTROLLER_NODE_H
+
+#include <thread>
+#include <chrono>
 
 #include <boost/bind.hpp>
 #include <Eigen/Eigen>
@@ -36,16 +40,18 @@
 
 #include "rotors_control/common.h"
 #include "rotors_control/lee_position_controller.h"
+#include <rotors_step_simulation_plugin/request_to_take_n_steps.h>
 
 namespace rotors_control {
 
 class LeePositionControllerNode {
  public:
-  LeePositionControllerNode(const ros::NodeHandle& nh, const ros::NodeHandle& private_nh, const char* data_type);
+  LeePositionControllerNode(const ros::NodeHandle& nh, const ros::NodeHandle& private_nh);
   ~LeePositionControllerNode();
 
   void InitializeParams();
-  void Publish();
+  void Publish_Command();
+  void startRequest();
 
  private:
   ros::NodeHandle nh_;
@@ -59,13 +65,23 @@ class LeePositionControllerNode {
   ros::Subscriber cmd_trajectory_sub_;
   ros::Subscriber cmd_multi_dof_joint_trajectory_sub_;
   ros::Subscriber cmd_pose_sub_;
-  ros::Subscriber odometry_sub_;
 
-  ros::Publisher motor_velocity_reference_pub_;
+  // service client
+  ros::ServiceClient request_to_take_n_steps_client;
+  // service instant
+  rotors_step_simulation_plugin::request_to_take_n_steps srv_step;
+  // odom message for the controller responsed by gazebo plugin
+  nav_msgs::Odometry odom;
+
+  // params for simulation
+  int controller_wait_interval;
+  int gazebo_step_size;
 
   mav_msgs::EigenTrajectoryPointDeque commands_;
   std::deque<ros::Duration> command_waiting_times_;
   ros::Timer command_timer_;
+
+  mav_msgs::Actuators actuator_msg;
 
   void TimedCommandCallback(const ros::TimerEvent& e);
 
@@ -74,8 +90,6 @@ class LeePositionControllerNode {
 
   void CommandPoseCallback(
       const geometry_msgs::PoseStampedConstPtr& pose_msg);
-
-  void OdometryCallback(const nav_msgs::OdometryConstPtr& odometry_msg);
 };
 }
 

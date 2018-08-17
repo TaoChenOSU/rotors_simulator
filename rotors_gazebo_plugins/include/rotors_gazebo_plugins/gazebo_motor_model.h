@@ -105,6 +105,8 @@ class GazeboMotorModel : public MotorModel, public ModelPlugin {
   virtual void InitializeParams();
   virtual void Publish();
 
+  
+
  protected:
   virtual void UpdateForcesAndMoments();
   virtual void Load(physics::ModelPtr _model, sdf::ElementPtr _sdf);

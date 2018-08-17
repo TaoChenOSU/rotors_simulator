@@ -103,10 +103,11 @@ namespace rotors_control {
     state.pose.pose.position.y = NormalDistribution(0.0, 0.8);
     state.pose.pose.position.z = UniformDistribution(0.0, 2.0);
 
-    roll = NormalDistribution(0.0, PI/12);
-    pitch = NormalDistribution(0.0, PI/12);
+    // uniform distributed orientation, according to http://www.cognitive-antics.net/uniform-random-orientation/
+    roll = UniformDistribution(-PI/12, PI/12);
+    pitch = asin((sin(PI/12)-sin(-PI/12))*UniformDistribution(0, 1));
     // yaw = UniformDistribution(-PI/6, PI/6);
-    yaw = 0;
+    yaw = 0.0;
 
     // This might not generate uniform distributed orientations
     double cy = cos(yaw/2);

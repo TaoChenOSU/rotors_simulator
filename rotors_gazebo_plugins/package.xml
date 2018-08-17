@@ -32,11 +32,13 @@
   <build_depend>rosbag</build_depend>
   <build_depend>roscpp</build_depend>
   <build_depend>rotors_comm</build_depend>
-  <build_depend>rotors_control</build_depend>
+  <!-- <build_depend>rotors_control</build_depend> -->
   <build_depend>std_srvs</build_depend>
   <build_depend>tf</build_depend>
   <build_depend>yaml-cpp</build_depend>
   <build_depend>protobuf-dev</build_depend>
+  <build_depend>message_generation</build_depend>
+  <build_depend>nav_msgs</build_depend>
 
 
   <!-- Dependencies needed after this package is compiled. -->
@@ -51,9 +53,11 @@
   <run_depend>rosbag</run_depend>
   <run_depend>roscpp</run_depend>
   <run_depend>rotors_comm</run_depend>
-  <run_depend>rotors_control</run_depend>
+  <!-- <run_depend>rotors_control</run_depend> -->
   <run_depend>std_srvs</run_depend>
   <run_depend>tf</run_depend>
   <run_depend>yaml-cpp</run_depend>
+  <run_depend>message_runtime</run_depend>
+  <run_depend>nav_msgs</run_depend>
 
 </package>
