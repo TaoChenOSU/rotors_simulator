@@ -26,12 +26,13 @@
     <node name="step_lee_position_controller_node" pkg="rotors_control" type="step_lee_position_controller_node" output="screen">
       <rosparam command="load" file="$(find rotors_gazebo)/resource/lee_controller_$(arg mav_name).yaml" />
       <rosparam command="load" file="$(find rotors_gazebo)/resource/$(arg mav_name).yaml" />
-      <param name="gazebo_step_size" value="2" /> <!-- step(s) -->
-      <param name="controller_wait_interval" value="1" />  <!-- ms -->
+      <param name="gazebo_step_size" value="4" /> <!-- step(s) -->
+      <param name="controller_wait_interval" value="5" />  <!-- ms -->
+      <param name="t_max" value="1000" /> <!-- 100 iterations every reset-->
       <remap from="odometry" to="odometry_sensor1/odometry" />
     </node>
     <node name="hovering_example" pkg="rotors_gazebo" type="hovering_example" output="screen"/>
-    <node name="waypoint_publisher_file" pkg="rotors_gazebo" type="waypoint_publisher_file" output="screen" args="$(find rotors_gazebo)/resource/example_waypoints.txt"/>
+    <!-- <node name="waypoint_publisher_file" pkg="rotors_gazebo" type="waypoint_publisher_file" output="screen" args="$(find rotors_gazebo)/resource/example_waypoints.txt"/> -->
     <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
     <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
   </group>

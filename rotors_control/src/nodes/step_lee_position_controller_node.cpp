@@ -48,13 +48,18 @@ LeePositionControllerNode::LeePositionControllerNode(
   // we don't need to record data, however, we can
   lee_position_controller_.SetLogDataType("1");
 
-  request_to_take_n_steps_client = nh_.serviceClient<rotors_step_simulation_plugin::request_to_take_n_steps>("/gazebo_step/take_n_steps");
+  request_to_take_n_steps_client = nh_.serviceClient<rotors_step_simulation_plugin::RequestToTakeNSteps>(
+    "/gazebo_step/take_n_steps");
+  request_to_reset_client = nh_.serviceClient<rotors_step_simulation_plugin::RequestToResetState>(
+    "/gazebo_step/reset");
 
   // get params for simulation
   nh_.param("/hummingbird/step_lee_position_controller_node/controller_wait_interval", 
                 controller_wait_interval, 10); // default 10ms
   nh_.param("/hummingbird/step_lee_position_controller_node/gazebo_step_size", 
                 gazebo_step_size, 2); // default 2 steps per command
+  nh_.param("/hummingbird/step_lee_position_controller_node/t_max", 
+                t_max, 1000); // default 100 iterations every reset
 
   // output commands of the controller
   // for quadrotors only (4 motors)
@@ -62,22 +67,40 @@ LeePositionControllerNode::LeePositionControllerNode(
 
   // initialize command
   LeePositionControllerNode::srv_step.request.step_size = gazebo_step_size;
-  LeePositionControllerNode::srv_step.request.motor_0_speed = 0.0;
-  LeePositionControllerNode::srv_step.request.motor_1_speed = 0.0;
-  LeePositionControllerNode::srv_step.request.motor_2_speed = 0.0;
-  LeePositionControllerNode::srv_step.request.motor_3_speed = 0.0;
+  LeePositionControllerNode::srv_step.request.motor_speeds = {0.0, 0.0, 0.0, 0.0};
 
-  while (!request_to_take_n_steps_client.call(srv_step)) {
-    ROS_INFO_ONCE("waiting service server to wake up...");
-  }
+  t_iter = 0;
 } 
 
 LeePositionControllerNode::~LeePositionControllerNode() {}
 
+void LeePositionControllerNode::reset() {
+  // check if the service exists
+  if (!ros::service::exists("/gazebo_step/reset", false)) {
+    ROS_INFO_ONCE("Waiting for reset service");
+    return;
+  }
+
+  rotors_step_simulation_plugin::RequestToResetState srv = GetNewStateSrv();
+
+  if (request_to_reset_client.call(srv)) {
+    ROS_INFO("is_reset %d", srv.response.is_reset);
+  }
+
+}
+
 void LeePositionControllerNode::startRequest() {
+  // check if the service exists
+  if (!ros::service::exists("/gazebo_step/take_n_steps", false)) {
+    ROS_INFO_ONCE("Waiting for step service");
+    return;
+  }
 
   if (request_to_take_n_steps_client.call(srv_step)) {
     odom = srv_step.response.new_state;
+
+    // ROS_INFO("Step took: %d", srv_step.response.step_took);
+
     nav_msgs::OdometryConstPtr odom_ptr(new nav_msgs::Odometry(odom));
 
     EigenOdometry odometry;
@@ -88,12 +111,17 @@ void LeePositionControllerNode::startRequest() {
     lee_position_controller_.CalculateRotorVelocities(&ref_rotor_velocities);
 
     srv_step.request.step_size = gazebo_step_size;
-    srv_step.request.motor_0_speed = ref_rotor_velocities[0];
-    srv_step.request.motor_1_speed = ref_rotor_velocities[1];
-    srv_step.request.motor_2_speed = ref_rotor_velocities[2];
-    srv_step.request.motor_3_speed = ref_rotor_velocities[3];
+    srv_step.request.motor_speeds.clear();
+    for (int i = 0; i < 4; i++) {
+      srv_step.request.motor_speeds.push_back(ref_rotor_velocities[i]);
+    }
 
     std::this_thread::sleep_for(std::chrono::milliseconds(controller_wait_interval));
+    t_iter++;
+    if (t_iter == t_max) {
+      reset();
+      t_iter = 0;
+    }
   }
 }
 
@@ -218,6 +246,59 @@ void LeePositionControllerNode::TimedCommandCallback(const ros::TimerEvent& e) {
   }
 }
 
+rotors_step_simulation_plugin::RequestToResetState LeePositionControllerNode::GetNewStateSrv() {
+    nav_msgs::Odometry state;
+    rotors_step_simulation_plugin::RequestToResetState srv;
+
+    // double normalizedFactor;
+    double roll, pitch, yaw;
+
+    state.pose.pose.position.x = NormalDistribution(0.0, 0.8);
+    state.pose.pose.position.y = NormalDistribution(0.0, 0.8);
+    state.pose.pose.position.z = UniformDistribution(0.0, 2.0);
+
+    // uniform distributed orientation, according to http://www.cognitive-antics.net/uniform-random-orientation/
+    roll = UniformDistribution(-PI/12, PI/12);
+    pitch = asin((sin(PI/12)-sin(-PI/12))*UniformDistribution(0, 1));
+    // yaw = UniformDistribution(-PI/6, PI/6);
+    yaw = 0.0;
+
+    // This might not generate uniform distributed orientations
+    double cy = cos(yaw/2);
+    double sy = sin(yaw/2);
+    double cr = cos(roll/2);
+    double sr = sin(roll/2);
+    double cp = cos(pitch/2);
+    double sp = sin(pitch/2);
+
+    state.pose.pose.orientation.x = cy*sr*cp - sy*cr*sp;
+    state.pose.pose.orientation.y = cy*cr*sp + sy*sr*cp;
+    state.pose.pose.orientation.z = sy*cr*cp - cy*sr*sp;
+    state.pose.pose.orientation.w = cy*cr*cp + sy*sr*sp;
+
+    state.twist.twist.linear.x = 0;
+    state.twist.twist.linear.y = 0;
+    state.twist.twist.linear.z = 0;
+
+    state.twist.twist.angular.x = 0;
+    state.twist.twist.angular.y = 0;
+    state.twist.twist.angular.z = 0;
+
+    srv.request.robot_name = "hummingbird";
+    srv.request.state = state;
+
+    return srv;
+  }
+
+  double LeePositionControllerNode::NormalDistribution(double mean, double stddev) {
+    std::normal_distribution<double> distribution(mean, stddev);
+    return distribution(generator);
+  }
+
+  double LeePositionControllerNode::UniformDistribution(double lower, double upper) {
+    std::uniform_real_distribution<double> distribution(lower, upper);
+    return distribution(generator);
+  }
 }
 
 int main(int argc, char** argv) {

@@ -27,6 +27,8 @@
 #include <boost/bind.hpp>
 #include <Eigen/Eigen>
 #include <stdio.h>
+#include <random>
+#include <math.h>
 
 #include <geometry_msgs/PoseStamped.h>
 #include <mav_msgs/Actuators.h>
@@ -40,7 +42,10 @@
 
 #include "rotors_control/common.h"
 #include "rotors_control/lee_position_controller.h"
-#include <rotors_step_simulation_plugin/request_to_take_n_steps.h>
+#include <rotors_step_simulation_plugin/RequestToTakeNSteps.h>
+#include <rotors_step_simulation_plugin/RequestToResetState.h>
+
+#define PI 3.1415926535897
 
 namespace rotors_control {
 
@@ -52,6 +57,7 @@ class LeePositionControllerNode {
   void InitializeParams();
   void Publish_Command();
   void startRequest();
+  void reset();
 
  private:
   ros::NodeHandle nh_;
@@ -68,14 +74,18 @@ class LeePositionControllerNode {
 
   // service client
   ros::ServiceClient request_to_take_n_steps_client;
+  ros::ServiceClient request_to_reset_client;
   // service instant
-  rotors_step_simulation_plugin::request_to_take_n_steps srv_step;
+  rotors_step_simulation_plugin::RequestToTakeNSteps srv_step;
   // odom message for the controller responsed by gazebo plugin
   nav_msgs::Odometry odom;
 
   // params for simulation
   int controller_wait_interval;
   int gazebo_step_size;
+
+  int t_max;
+  int t_iter;
 
   mav_msgs::EigenTrajectoryPointDeque commands_;
   std::deque<ros::Duration> command_waiting_times_;
@@ -90,6 +100,14 @@ class LeePositionControllerNode {
 
   void CommandPoseCallback(
       const geometry_msgs::PoseStampedConstPtr& pose_msg);
+
+  rotors_step_simulation_plugin::RequestToResetState GetNewStateSrv();
+
+  std::default_random_engine generator;
+
+  double UniformDistribution(double lower, double upper); 
+
+  double NormalDistribution(double mean, double stddev);
 };
 }
 
