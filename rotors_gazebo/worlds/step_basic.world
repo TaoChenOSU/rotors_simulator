@@ -19,7 +19,7 @@
       <elevation>500.0</elevation>
       <heading_deg>0</heading_deg>
     </spherical_coordinates>
-    <physics type='ode'>
+    <physics type='bullet'>
       <ode>
         <solver>
           <type>quick</type>
@@ -34,11 +34,12 @@
         </constraints>
       </ode>
       <max_step_size>0.01</max_step_size>
-      <real_time_factor>1</real_time_factor>
+      <real_time_factor>0</real_time_factor>
       <real_time_update_rate>10000</real_time_update_rate>
       <gravity>0 0 -9.8</gravity>
     </physics>
 
-    <plugin name="step_sim" filename="libstep_sim.so" />
+    <!-- <plugin name="step_sim" filename="libstep_sim.so" /> -->
+    <plugin name="step_sim_rpc" filename="libstep_sim_rpc.so" />    
   </world>
 </sdf>

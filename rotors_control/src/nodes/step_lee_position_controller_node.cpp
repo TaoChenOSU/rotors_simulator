@@ -67,9 +67,12 @@ LeePositionControllerNode::LeePositionControllerNode(
 
   // initialize command
   LeePositionControllerNode::srv_step.request.step_size = gazebo_step_size;
+  // LeePositionControllerNode::srv_step.request.odom_receive_mode = 2;
   LeePositionControllerNode::srv_step.request.motor_speeds = {0.0, 0.0, 0.0, 0.0};
 
   t_iter = 0;
+  total_time = 0;
+  num_of_trajs = 0;
 } 
 
 LeePositionControllerNode::~LeePositionControllerNode() {}
@@ -84,12 +87,14 @@ void LeePositionControllerNode::reset() {
   rotors_step_simulation_plugin::RequestToResetState srv = GetNewStateSrv();
 
   if (request_to_reset_client.call(srv)) {
-    ROS_INFO("is_reset %d", srv.response.is_reset);
+    // ROS_INFO("Reset successful: %d", srv.response.is_reset);
   }
 
 }
 
 void LeePositionControllerNode::startRequest() {
+  auto start_time = std::chrono::high_resolution_clock::now();
+
   // check if the service exists
   if (!ros::service::exists("/gazebo_step/take_n_steps", false)) {
     ROS_INFO_ONCE("Waiting for step service");
@@ -98,8 +103,6 @@ void LeePositionControllerNode::startRequest() {
 
   if (request_to_take_n_steps_client.call(srv_step)) {
     odom = srv_step.response.new_state;
-
-    // ROS_INFO("Step took: %d", srv_step.response.step_took);
 
     nav_msgs::OdometryConstPtr odom_ptr(new nav_msgs::Odometry(odom));
 
@@ -111,6 +114,7 @@ void LeePositionControllerNode::startRequest() {
     lee_position_controller_.CalculateRotorVelocities(&ref_rotor_velocities);
 
     srv_step.request.step_size = gazebo_step_size;
+    // srv_step.request.odom_receive_mode = 2;
     srv_step.request.motor_speeds.clear();
     for (int i = 0; i < 4; i++) {
       srv_step.request.motor_speeds.push_back(ref_rotor_velocities[i]);
@@ -118,11 +122,19 @@ void LeePositionControllerNode::startRequest() {
 
     std::this_thread::sleep_for(std::chrono::milliseconds(controller_wait_interval));
     t_iter++;
-    if (t_iter == t_max) {
+    if (t_iter >= t_max) {
+      // if (num_of_trajs >= 100) {
+      //   std::cout << total_time << " milliseconds; " << "Ratio: " << 400.0*1000.0/total_time << std::endl;
+      //   total_time = 0;
+      //   num_of_trajs = 0;
+      // }
       reset();
       t_iter = 0;
+      num_of_trajs++;
     }
   }
+  auto end_time = std::chrono::high_resolution_clock::now();
+  total_time += std::chrono::duration_cast<std::chrono::milliseconds>(end_time-start_time).count();
 }
 
 void LeePositionControllerNode::InitializeParams() {

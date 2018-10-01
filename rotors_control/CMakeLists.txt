@@ -82,7 +82,7 @@ install(TARGETS lee_position_controller roll_pitch_yawrate_thrust_controller nn_
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 )
 
-install(TARGETS lee_position_controller_node step_lee_position_controller_node roll_pitch_yawrate_thrust_controller_node nn_hovering_controller_node random_state_generator dagger_routine
+install(TARGETS lee_position_controller_node roll_pitch_yawrate_thrust_controller_node nn_hovering_controller_node random_state_generator dagger_routine
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

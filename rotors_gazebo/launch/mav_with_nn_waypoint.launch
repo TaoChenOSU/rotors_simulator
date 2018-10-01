@@ -14,7 +14,7 @@
 
   <arg name="model_path" default="/home/taotaochen/Desktop/REL_Lab/Xeon/RotorS_Experiments/Experiment_1/Results/100_trajs/run_44" />
   <arg name="config_path" default="/home/taotaochen/Desktop/REL_Lab/Xeon/RotorS_Experiments/Experiment_1/Results/100_trajs/run_44" />
-  <arg name="data_stat_path" default="/home/taotaochen/Desktop/REL_Lab/Xeon/RotorS_Experiments/Experiment_1/Results/90_trajs" />
+  <arg name="data_stat_path" default="/home/taotaochen/Desktop/REL_Lab/Xeon/RotorS_Experiments/Experiment_1/Results/100_trajs" />
 
   <env name="GAZEBO_MODEL_PATH" value="${GAZEBO_MODEL_PATH}:$(find rotors_gazebo)/models" />
   <env name="GAZEBO_RESOURCE_PATH" value="${GAZEBO_RESOURCE_PATH}:$(find rotors_gazebo)/models" />

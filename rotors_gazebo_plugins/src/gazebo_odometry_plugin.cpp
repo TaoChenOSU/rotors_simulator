@@ -479,11 +479,7 @@ void GazeboOdometryPlugin::OnUpdate(const common::UpdateInfo& _info) {
 
     if (odometry_pub_->HasConnections()) {
       // DEBUG
-      // make sure the message gets sent
       odometry_pub_->Publish(odometry_msg, true);
-      while (odometry_pub_->GetOutgoingCount() > 0) {
-        odometry_pub_->SendMessage();
-      }
     }
 
     //==============================================//

@@ -86,6 +86,8 @@ class LeePositionControllerNode {
 
   int t_max;
   int t_iter;
+  int total_time;
+  int num_of_trajs;
 
   mav_msgs::EigenTrajectoryPointDeque commands_;
   std::deque<ros::Duration> command_waiting_times_;
