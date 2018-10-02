@@ -10,7 +10,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   sensor_msgs
   cmake_modules
-  rotors_step_simulation_plugin
+#  rotors_step_simulation_plugin
 )
 
 find_package(Eigen REQUIRED)
@@ -18,7 +18,7 @@ find_package(Eigen REQUIRED)
 catkin_package(
   INCLUDE_DIRS include ${Eigen_INCLUDE_DIRS}
   LIBRARIES lee_position_controller roll_pitch_yawrate_thrust_controller nn_hovering_controller
-  CATKIN_DEPENDS geometry_msgs mav_msgs nav_msgs roscpp sensor_msgs rotors_step_simulation_plugin
+  CATKIN_DEPENDS geometry_msgs mav_msgs nav_msgs roscpp sensor_msgs #rotors_step_simulation_plugin
   DEPENDS Eigen
 )
 
@@ -54,10 +54,10 @@ add_dependencies(lee_position_controller_node ${catkin_EXPORTED_TARGETS})
 target_link_libraries(lee_position_controller_node
   lee_position_controller ${catkin_LIBRARIES})
 
-add_executable(step_lee_position_controller_node src/nodes/step_lee_position_controller_node.cpp)
-add_dependencies(step_lee_position_controller_node ${catkin_EXPORTED_TARGETS})
-target_link_libraries(step_lee_position_controller_node
-  lee_position_controller ${catkin_LIBRARIES})
+# add_executable(step_lee_position_controller_node src/nodes/step_lee_position_controller_node.cpp)
+# add_dependencies(step_lee_position_controller_node ${catkin_EXPORTED_TARGETS})
+# target_link_libraries(step_lee_position_controller_node
+#   lee_position_controller ${catkin_LIBRARIES})
 
 add_executable(nn_hovering_controller_node src/nodes/nn_hovering_controller_node.cpp)
 add_dependencies(nn_hovering_controller_node ${catkin_EXPORTED_TARGETS})
