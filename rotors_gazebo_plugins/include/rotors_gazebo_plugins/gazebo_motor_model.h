@@ -167,6 +167,7 @@ class GazeboMotorModel : public MotorModel, public ModelPlugin {
   gazebo::transport::SubscriberPtr wind_speed_sub_;
 
   physics::ModelPtr model_;
+  sdf::ElementPtr sdf_;
   physics::JointPtr joint_;
   physics::LinkPtr link_;
 

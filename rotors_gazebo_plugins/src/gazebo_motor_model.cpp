@@ -53,6 +53,9 @@ void GazeboMotorModel::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) {
 
   model_ = _model;
 
+  // ...
+  sdf_ = _sdf;
+
   namespace_.clear();
 
   if (_sdf->HasElement("robotNamespace"))

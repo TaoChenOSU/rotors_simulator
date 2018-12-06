@@ -152,10 +152,12 @@ void GazeboRosInterfacePlugin::ConnectHelper(
       ConnectHelperStorage<GazeboMsgT>{ptr, fp, ros_publisher});
 
   // Check if element was already present
-  if (!callback_entry.second)
+  if (!callback_entry.second) {
     gzerr << "Tried to add element to map but the gazebo topic name was "
              "already present in map."
           << std::endl;
+    return;
+  }
 
   // Create subscriber
   gazebo::transport::SubscriberPtr subscriberPtr;
@@ -181,8 +183,8 @@ void GazeboRosInterfacePlugin::GzConnectGazeboToRosTopicMsgCallback(
   const std::string rosTopicName =
       gz_connect_gazebo_to_ros_topic_msg->ros_topic();
 
-  gzdbg << "Connecting Gazebo topic \"" << gazeboTopicName
-        << "\" to ROS topic \"" << rosTopicName << "\"." << std::endl;
+  // gzdbg << "Connecting Gazebo topic \"" << gazeboTopicName
+  //       << "\" to ROS topic \"" << rosTopicName << "\"." << std::endl;
 
   // std::cout << "Connecting Gazebo topic \"" << gazeboTopicName
   //       << "\" to ROS topic \"" << rosTopicName << "\"." << std::endl;
